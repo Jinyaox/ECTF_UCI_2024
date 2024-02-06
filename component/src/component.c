@@ -21,18 +21,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "Code_warehouse/c/Rand_lib.h"
-
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 
 // Includes from containerized build
 #include "ectf_params.h"
-#include "global_secrets.h"
 
 // Include cache disable
 #include "disable_cache.h"
+#include "Rand_lib.h"
+#include "key_exchange.h"
+#include "op_codes.h"
+
 
 #ifdef POST_BOOT
 #include "led.h"
@@ -53,10 +53,7 @@
 #define ATTESTATION_CUSTOMER "Fritz"
 */
 //AES
-#define AES_SIZE 16 // 16 bytes
-#define RAND_Y_SIZE 8
-
-uint8_t RAND_Y[RAND_Z_SIZE];
+#define AES_SIZE 16// 16 bytes
 uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0; 
 
@@ -72,7 +69,7 @@ typedef enum {
     uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-/******************************** TYPE DEFINITIONS *********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
@@ -125,6 +122,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  */
 int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 
+
 // Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
 void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
     memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
@@ -151,8 +149,6 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
     send_packet->rand_z = command->rand_z;
     secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
-
-
 /******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
@@ -287,19 +283,10 @@ int main(void) {
 
     while (1) {
         if(synthesized == 0){
-            //The key_sync takes the first argument as a char* array, don't know if it will cause problem
-            //Since the GLOBAL_KEY is unit8_t
 
-            //This function will wait for the key materials from AP to merge the key
-            //We assume the first message from the AP will be merging the key.
             key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
-        else{
-            //In the receive_buffer we will have plain text
-            memset(receive_buffer, 0, sizeof(receive_buffer));
-            secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-            component_process_cmd();
-        }
+        component_process_cmd();
     }
 }

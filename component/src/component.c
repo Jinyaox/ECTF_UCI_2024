@@ -21,18 +21,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "Code_warehouse/c/Rand_lib.h"
-
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 
 // Includes from containerized build
 #include "ectf_params.h"
-#include "global_secrets.h"
 
 // Include cache disable
 #include "disable_cache.h"
+#include "Rand_lib.h"
+#include "key_exchange.h"
+#include "op_codes.h"
+
 
 #ifdef POST_BOOT
 #include "led.h"
@@ -53,13 +53,11 @@
 #define ATTESTATION_CUSTOMER "Fritz"
 */
 //AES
-#define AES_SIZE 16 // 16 bytes
-#define RAND_Z_SIZE 8
+#define AES_SIZE 16// 16 bytes
 uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0; 
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
     uint8_t COMPONENT_CMD_NONE,
@@ -67,10 +65,11 @@ typedef enum {
     uint8_t COMPONENT_CMD_VALIDATE,
     uint8_t COMPONENT_CMD_BOOT,
     uint8_t COMPONENT_CMD_ATTEST,
+    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
@@ -81,8 +80,7 @@ typedef struct {
 } message;
 
 
-/********************************* FUNCTION DECLARATIONS
- * **********************************/
+/********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
 void component_process_cmd(void);
 void process_boot(void);
@@ -90,15 +88,13 @@ void process_scan(void);
 void process_validate(void);
 void process_attest(void);
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
+/********************************* GLOBAL VARIABLES **********************************/
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send
  *
@@ -126,8 +122,34 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  */
 int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 
-/******************************* FUNCTION DEFINITIONS
- * *********************************/
+
+// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
+void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    secure_wait_and_receive_packet(receive_buffer);
+    message * command = (message *)receive_buffer;
+    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
+    message * send_packet = (message *)validate_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->rand_z = command->rand_z;
+    send_packet->rand_y = RAND_Y;
+    secure_send_packet_and_ack(sizeof(validate_buffer), validate_buffer, GLOBAL_KEY);
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
+        print_error("Component transmitting failed, the transmitting takes too long");
+        return;
+    }
+    message * command = (message*) receive_buffer;
+    if(command->rand_y != RAND_Y){
+        print_error("Component has received expired message");
+    }
+    message * send_packet = (message *)transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    send_packet->rand_z = command->rand_z;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+}
+/******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
 // Your design does not need to change this
@@ -261,19 +283,10 @@ int main(void) {
 
     while (1) {
         if(synthesized == 0){
-            //The key_sync takes the first argument as a char* array, don't know if it will cause problem
-            //Since the GLOBAL_KEY is unit8_t
 
-            //This function will wait for the key materials from AP to merge the key
-            //We assume the first message from the AP will be merging the key.
             key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
-        else{
-            //In the receive_buffer we will have plain text
-            memset(receive_buffer, 0, sizeof(receive_buffer));
-            secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-            component_process_cmd();
-        }
+        component_process_cmd();
     }
 }

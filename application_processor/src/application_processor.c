@@ -14,7 +14,6 @@
 
 #include "board.h"
 #include "i2c.h"
-// #include "icc.h"
 #include "led.h"
 #include "mxc_delay.h"
 #include "mxc_device.h"
@@ -26,11 +25,12 @@
 #include <string.h>
 
 #include "aes.h"
-#include "Code_warehouse/c/Rand_lib.h"
+#include "Rand_lib.h"
 
 #include "board_link.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
+#include "op_codes.h"
 
 #ifdef CRYPTO_EXAMPLE
 #include "simple_crypto.h"
@@ -43,12 +43,6 @@
 
 // Includes from containerized build
 #include "ectf_params.h"
-#include "global_secrets.h"
-
-// Include cache disable
-#include "disable_cache.h"
-
-// Include cache disable
 #include "disable_cache.h"
 
 /********************************* Global Variables **********************************/
@@ -78,14 +72,17 @@ uint8_t GLOBAL_KEY[AES_SIZE];
 //12 byte number
 #define RAND_Z_SIZE 8
 uint8_t RAND_Z[RAND_Z_SIZE];
+uint8_t RAND_Y[RAND_Z_SIZE];
 
 // AES Macros
 #define AES_SIZE 16// 16 bytes
 
-uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+uint8_t synthesized=0; // when you initiate any command from the host machine, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+uint8_t GLOBAL_KEY[AES_SIZE];
+
+flash_entry flash_status;
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
 // along with the opcode through board_link. This is not utilized by the example
@@ -114,46 +111,79 @@ typedef enum {
     uint8_t COMPONENT_CMD_VALIDATE,
     uint8_t COMPONENT_CMD_BOOT,
     uint8_t COMPONENT_CMD_ATTEST,
+    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
-// Variable for information stored in flash memory
-flash_entry flash_status;
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
- * @brief Secure Send 
- * 
- * @param address: i2c_addr_t, I2C address of recipient
- * @param buffer: uint8_t*, pointer to data to be send
- * @param len: uint8_t, size of data to be sent
- *
- * Securely send data over I2C. This function is utilized in POST_BOOT
- functionality.
- * This function must be implemented by your team to align with the security
- requirements.
-
-*/
-int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
-    return send_packet(address, len, buffer, GLOBAL_KEY);
-}
-
-/**
- * @brief Secure Receive
+ * @brief Secure Send and Receive
  *
  * @param address: i2c_addr_t, I2C address of sender
  * @param buffer: uint8_t*, pointer to buffer to receive data to
+ * @param transmit_buffer: message buffer for transmit
+ * @param receive_buffer: message buffer of receive
  *
  * @return int: number of bytes received, negative if error
  *
- * Securely receive data over I2C. This function is utilized in POST_BOOT
- * functionality. This function must be implemented by your team to align with
- * the security requirements.
+ * Securely send and receive data over I2C. This function is utilized in POST_BOOT
+ * functionality.
  */
-int secure_receive(i2c_addr_t address, uint8_t *buffer) {
-    return poll_and_receive_packet(address, buffer, GLOBAL_KEY);
+int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_t* receive_buffer) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+
+    message * send_packet = (message *) challenge_buffer;
+    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->rand_z = RAND_Z;
+
+    int len = issue_cmd(address, challenge_buffer, answer_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Failed to validate the secure send for post boot\n");
+            return ERROR_RETURN;
+        }
+    
+    message * response = (message *) answer_buffer;
+    //compare cmd code
+    if(response->op_code != COMPONENT_CMD_SECURE_SEND_VALIDATE){
+        print_error("Invalid command message from component")
+    }
+
+    //compare Z value
+    if (response->rand_z != RAND_Z){
+        print_error("AP received expired validate message in post boot");
+        return ERROR_RETURN;
+    }
+
+    message * send_packet = (message *) transmit_buffer;
+    response->rand_y = RAND_Y;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    send_packet->rand_z = RAND_Z;
+    send_packet->rand_y = RAND_Y;
+
+    int len = issue_cmd(address, transmit_buffer, receive_buffer);
+    if (len == ERROR_RETURN) {
+        print_error("Failed to send and receive for post boot\n");
+        return ERROR_RETURN;
+    }
+
+    message * response = (message *) receive_buffer;
+    //compare cmd code
+    if(response->op_code != COMPONENT_CMD_SECURE_SEND_CONFIMRED){
+        print_error("Invalid command message from component");
+        return ERROR_RETURN;
+    }
+    //compare Y value
+    if (response->rand_y != RAND_Y){
+        print_error("AP received expired confirm message in post boot");
+        return ERROR_RETURN;
+    }
+    return len
+
+
+
 }
 
 /**
@@ -225,8 +255,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     return len
 }
 
-/******************************** COMPONENT COMMS
- * ********************************/
+/******************************** COMPONENT COMMS ********************************/
 
 // We're assuming this doesn't need protection/modification
 int scan_components() { 
@@ -250,6 +279,19 @@ int scan_components() {
         // Create command message 
         message* command = (message*) transmit_buffer;
 
+        uint8_t msg[AES_SIZE];
+        uint8_t ciphertext[AES_SIZE];
+        msg[0] = COMPONENT_CMD_SCAN;
+        //Calling simple_crypto.c
+        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+
+        //put ciphertext in transmit_buffer memcpy
+        for(int i = 0; i < AES_SIZE; i++){
+            transmit_buffer[i] = ciphertext[i];
+        }
+        // Send out command and receive resultGLOBAL_KEY, c
+
         command->opcode = COMPONENT_CMD_SCAN;
 
         // Send out command and receive result
@@ -265,7 +307,7 @@ int scan_components() {
     return SUCCESS_RETURN;
 }
 
-// Combining both functions to ensure security
+
 int validate_and_boot_components(){
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -305,7 +347,8 @@ int validate_and_boot_components(){
 
         //compare cmd code
         if(response->op_code != COMPONENT_CMD_BOOT){
-            print_error("Invalid command message from component")
+            print_error("Invalid command message from component");
+            return ERROR_RETURN;
         }
 
         //compare cid
@@ -540,12 +583,13 @@ int main() {
     // Handle commands forever
     char buf[100];
     while (1) {
+        memset(buf,0,100);
         recv_input("Enter Command: ", buf);
 
-        if(synthesized == 0){
-            key_sync(GLOBAL_KEY, flash_status.component_cnt, 
-            flash_status.component_ids[0], flash_status.component_ids[1]);
-            synthesized = 1
+        //Shouldn't the merging happen here?
+        if((synthesized == 0) && (strlen(buf)!=0)){
+            key_sync(GLOBAL_KEY, flash_status.component_cnt, flash_status.component_ids[0], flash_status.component_ids[1]);
+            synthesized=1;
         }
 
         // Execute requested command

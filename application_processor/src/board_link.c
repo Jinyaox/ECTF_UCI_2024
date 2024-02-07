@@ -16,6 +16,8 @@
 
 #include "board_link.h"
 #include "mxc_delay.h"
+#include "simple_crypto.h"
+
 
 // forward declaration
 int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,

@@ -30,7 +30,6 @@
 #include "board_link.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
-#include "simple_crypto.h"
 
 // Includes from containerized build
 #include "disable_cache.h"

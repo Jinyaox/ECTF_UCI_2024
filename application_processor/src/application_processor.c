@@ -118,6 +118,13 @@ typedef enum {
     COMPONENT_CMD_ATTEST,
     COMPONENT_CMD_SECURE_SEND_VALIDATE,
     COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************* POST BOOT FUNCTIONALITY
@@ -143,7 +150,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer,
     message *send_packet = (message *)challenge_buffer;
     Rand_ASYC(RAND_Z, RAND_Z_SIZE);
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
-    send_packet->rand_z = RAND_Z;
+    strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
 
     int len = issue_cmd(address, challenge_buffer, answer_buffer);
     if (len == ERROR_RETURN) {
@@ -153,40 +160,40 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer,
 
     message *response = (message *)answer_buffer;
     // compare cmd code
-    if (response->op_code != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
-        print_error("Invalid command message from component")
+    if (response->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
+        print_error("Invalid command message from component");
     }
 
     // compare Z value
-    if (response->rand_z != RAND_Z) {
+    if (strncmp(response->rand_z, RAND_Z, RAND_Z_SIZE)) {
         print_error("AP received expired validate message in post boot");
         return ERROR_RETURN;
     }
 
     message *send_packet = (message *)transmit_buffer;
-    response->rand_y = RAND_Y;
+    strncpy(response->rand_y, RAND_Y, RAND_Z_SIZE);
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
-    send_packet->rand_z = RAND_Z;
-    send_packet->rand_y = RAND_Y;
+    strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
+    strncpy(send_packet->rand_y, RAND_Y, RAND_Z_SIZE);
 
-    int len = issue_cmd(address, transmit_buffer, receive_buffer);
-    if (len == ERROR_RETURN) {
+    int len2 = issue_cmd(address, transmit_buffer, receive_buffer);
+    if (len2 == ERROR_RETURN) {
         print_error("Failed to send and receive for post boot\n");
         return ERROR_RETURN;
     }
 
-    message *response = (message *)receive_buffer;
+    message *response2 = (message *)receive_buffer;
     // compare cmd code
-    if (response->op_code != COMPONENT_CMD_SECURE_SEND_CONFIMRED) {
+    if (response2->opcode != COMPONENT_CMD_SECURE_SEND_CONFIMRED) {
         print_error("Invalid command message from component");
         return ERROR_RETURN;
     }
     // compare Y value
-    if (response->rand_y != RAND_Y) {
+    if (response2->rand_y != RAND_Y) {
         print_error("AP received expired confirm message in post boot");
         return ERROR_RETURN;
     }
-    return len
+    return len2;
 }
 
 /**
@@ -257,7 +264,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
-    return len
+    return len;
 }
 
 /******************************** COMPONENT COMMS
@@ -328,21 +335,21 @@ int validate_and_boot_components() {
         message *command = (message *)transmit_buffer;
 
         // Comp_ID
-        unit32_t cid = flash_status.component_ids[i];
+        uint32_t cid = flash_status.component_ids[i];
 
-        // op_code
+        // opcode
         command->opcode = COMPONENT_CMD_VALIDATE;
 
         // comp_ID
-        command->comp_ID = cid
+        command->comp_ID = cid;
 
-            Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+        Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
         // rand_z
-        command->rand_z = RAND_Z
+        command->rand_z = RAND_Z;
 
-            // Send out command and receive result
-            int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
             print_error("Could not validate or boot component\n");
             return ERROR_RETURN;
@@ -351,7 +358,7 @@ int validate_and_boot_components() {
         message *response = (message *)receive_buffer;
 
         // compare cmd code
-        if (response->op_code != COMPONENT_CMD_BOOT) {
+        if (response->opcode != COMPONENT_CMD_BOOT) {
             print_error("Invalid command message from component");
             return ERROR_RETURN;
         }
@@ -383,34 +390,34 @@ int attest_component(uint32_t component_id) {
     // Create Validate and boot message
     message *command = (message *)transmit_buffer;
 
-    transmit_buffer[MAX_I2C_MESSAGE_LEN]
+    transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-        // Comp_ID
-        unit32_t cid = flash_status.component_ids[i];
+    // Comp_ID
+    uint32_t cid = flash_status.component_ids[i];
 
-    // op_code
+    // opcode
     command->opcode = COMPONENT_CMD_ATTEST;
 
     // comp_ID
-    command->comp_ID = cid
+    command->comp_ID = cid;
 
-        Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
     // rand_z
-    command->rand_z = RAND_Z
+    command->rand_z = RAND_Z;
 
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+    // Send out command and receive result
+    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
     if (len == ERROR_RETURN) {
         print_error("Could not attest\n");
         return ERROR_RETURN;
     }
 
     // decrypt attestation data
-    message *response = (message *)receive_buffer
+    message *response = (message *)receive_buffer;
 
-        // compare Z value
-        if (response->rand_z != RAND_Z) {
+    // compare Z value
+    if (response->rand_z != RAND_Z) {
         print_error("Random number provided is invalid");
         return ERROR_RETURN;
     }

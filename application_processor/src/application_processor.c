@@ -128,7 +128,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_
 
     message * send_packet = (message *) challenge_buffer;
     Rand_ASYC(RAND_Z, RAND_Z_SIZE);
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->opcode = (uint8_t)COMPONENT_CMD_SECURE_SEND_VALIDATE;
     strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
 
     int len = issue_cmd(address, challenge_buffer, answer_buffer);
@@ -139,7 +139,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_
     
     message * response = (message *) answer_buffer;
     //compare cmd code
-    if(response->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE){
+    if(response->opcode != (uint8_t)COMPONENT_CMD_SECURE_SEND_VALIDATE){
         print_error("Invalid command message from component");
     }
 
@@ -149,11 +149,11 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_
         return ERROR_RETURN;
     }
 
-    message * send_packet = (message *) transmit_buffer;
+    message * send_packet2 = (message *) transmit_buffer;
     strncpy(response->rand_y, RAND_Y, RAND_Z_SIZE);
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
-    strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
-    strncpy(send_packet->rand_y, RAND_Y, RAND_Z_SIZE);
+    send_packet2->opcode = (uint8_t)COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    strncpy(send_packet2->rand_z, RAND_Z, RAND_Z_SIZE);
+    strncpy(send_packet2->rand_y, RAND_Y, RAND_Z_SIZE);
 
     int len2 = issue_cmd(address, transmit_buffer, receive_buffer);
     if (len2 == ERROR_RETURN) {
@@ -163,7 +163,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_
 
     message * response2 = (message *) receive_buffer;
     //compare cmd code
-    if(response2->opcode != COMPONENT_CMD_SECURE_SEND_CONFIMRED){
+    if(response2->opcode != (uint8_t)COMPONENT_CMD_SECURE_SEND_CONFIMRED){
         print_error("Invalid command message from component");
         return ERROR_RETURN;
     }
@@ -281,7 +281,7 @@ int scan_components() {
         }
         // Send out command and receive resultGLOBAL_KEY, c
 
-        command->opcode = COMPONENT_CMD_SCAN;
+        command->opcode = (uint8_t)COMPONENT_CMD_SCAN;
 
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -305,7 +305,7 @@ int validate_and_boot_components(){
     // Send validate command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         // Set the I2C address of the component
-        uint32_t component_id = flash_status.component_ids[i]
+        uint32_t component_id = flash_status.component_ids[i];
         i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
         // Create Validate and boot message
@@ -315,7 +315,7 @@ int validate_and_boot_components(){
         uint32_t cid = flash_status.component_ids[i];
 
         // opcode
-        command->opcode = COMPONENT_CMD_VALIDATE;
+        command->opcode = (uint8_t)COMPONENT_CMD_VALIDATE;
         
         // comp_ID
         command->comp_ID = cid;
@@ -335,7 +335,7 @@ int validate_and_boot_components(){
         message* response = (message*) receive_buffer;
 
         //compare cmd code
-        if(response->opcode != COMPONENT_CMD_BOOT){
+        if(response->opcode != (uint8_t)COMPONENT_CMD_BOOT){
             print_error("Invalid command message from component");
             return ERROR_RETURN;
         }
@@ -372,7 +372,7 @@ int attest_component(uint32_t component_id) {
     uint32_t cid = flash_status.component_ids[i];
 
     // opcode
-    command->opcode = COMPONENT_CMD_ATTEST;
+    command->opcode = (uint8_t)COMPONENT_CMD_ATTEST;
     
     // comp_ID
     command->comp_ID = cid;

@@ -30,7 +30,6 @@
 #include "board_link.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
-#include "op_codes.h"
 
 #ifdef CRYPTO_EXAMPLE
 #include "simple_crypto.h"
@@ -109,13 +108,13 @@ typedef struct {
 
 // Datatype for commands sent to components
 typedef enum {
-    uint8_t COMPONENT_CMD_NONE,
-    uint8_t COMPONENT_CMD_SCAN,
-    uint8_t COMPONENT_CMD_VALIDATE,
-    uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST,
-    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
-    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************* POST BOOT FUNCTIONALITY

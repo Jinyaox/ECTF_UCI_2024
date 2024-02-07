@@ -4,8 +4,9 @@ extern flash_status;
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 #include "xor.h"
-uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+#include "key.h"
+uint8_t transmit_buffer1[MAX_I2C_MESSAGE_LEN];
+uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
 
 void sync2(char* dest, char* k2_m1){
     char cash_k2_r[18];
@@ -39,19 +40,19 @@ void sync1(char* dest, char* k2_m1){
 }
 
 void key_sync(char* dest){
-    uint8_t len=wait_and_receive_packet(receive_buffer);
+    uint8_t len=wait_and_receive_packet(receive_buffer1);
     if(len!=17){
         //we have an error so just return
         return;
     }
-    switch (receive_buffer[17])
+    switch (receive_buffer1[17])
     {
     case '1':
-        sync1(dest,receive_buffer);
+        sync1(dest,receive_buffer1);
         break;
     
     case '2':
-        sync2(dest,receive_buffer);
+        sync2(dest,receive_buffer1);
         break;
 
     default:
@@ -59,24 +60,4 @@ void key_sync(char* dest){
         return;
     }
 
-}
-
-char* key_sync(char* dest){
-    memset(receive_buffer, 0, sizeof(receive_buffer));
-    memset(transmit_buffer, 0, sizeof(transmit_buffer));
-    char FINAL_KEY[18] = {0};
-    char cash_k2_r[18] = {0};
-    wait_and_receive_packet(receive_buffer);
-    memcpy(cash_k2_r, receive_buffer, 16);
-    char cash_k1_m1[18] = {0};
-    XOR_secure(MASK, KEY_SHARE, cash_k1_m1);
-    memcpy(cash_k1_m1, transmit_buffer, 16);
-    send_packet_and_ack(16, transmit_buffer);
-    memset(receive_buffer, 0, sizeof(receive_buffer));
-    wait_and_receive_packet(receive_buffer);
-    char cash_k3_f1_r[18] = {0};
-    memcpy(cash_k3_f1_r, receive_buffer, 16);
-    XOR_secure(cash_k2_r, cash_k3_f1_r, FINAL_KEY);
-    XOR_secure(FINAL_MASK, FINAL_KEY, FINAL_KEY);
-    memcpy(dest, FINAL_KEY, 16);
 }

@@ -369,7 +369,7 @@ int attest_component(uint32_t component_id) {
     transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
     // Comp_ID
-    uint32_t cid = flash_status.component_ids[i];
+    uint32_t cid = component_id;
 
     // opcode
     command->opcode = (uint8_t)COMPONENT_CMD_ATTEST;

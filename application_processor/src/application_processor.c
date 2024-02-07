@@ -95,8 +95,9 @@ flash_entry flash_status;
 typedef struct {
     uint8_t opcode;
     uint32_t comp_ID;
-    uint8_t rand_z[RAND_Z_SIZE] uint8_t rand_y[RAND_Z_SIZE] uint8_t
-        remain[MAX_I2C_MESSAGE_LEN - 21];
+    uint8_t rand_z[RAND_Z_SIZE];
+    uint8_t rand_y[RAND_Z_SIZE];
+    uint8_t remain[MAX_I2C_MESSAGE_LEN - 21];
 } message;
 
 // Datatype for information stored in flash

@@ -388,7 +388,7 @@ int attest_component(uint32_t component_id) {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    for (unsigned i; i < flash_status.component_cnt; i++) {
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         // Set the I2C address of the component
         i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 

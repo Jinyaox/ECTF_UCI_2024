@@ -195,6 +195,24 @@ int get_provisioned_ids(uint32_t *buffer) {
 /********************************* UTILITIES **********************************/
 //
 
+/*Tested converters*/
+void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
+    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+}
+
+void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
+    *str_uint32 = 0; // Initialize to zero
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+}
+
+/*Return 1 if the same and 0 if different*/
+int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
+    int counter = 0;
+    for(int i = 0; i < 4; i++)
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+    return counter == 4;
+}
+
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces
 void init() {

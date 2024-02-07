@@ -48,8 +48,12 @@
 
 /********************************* Global Variables
  * **********************************/
+/********************************* Global Variables
+ * **********************************/
 
 // Flash Macros
+#define FLASH_ADDR                                                             \
+    ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (2 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_ADDR                                                             \
     ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (2 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -61,15 +65,21 @@
 // Secure Communication Macro
 // data is the output
 // 12 byte number
+// data is the output
+// 12 byte number
 #define RAND_Z_SIZE 8
 uint8_t RAND_Z[RAND_Z_SIZE];
 
 // AES Macros
 #define AES_SIZE 16 // 16 bytes
+#define AES_SIZE 16 // 16 bytes
 
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
 // Secure Communication Macro
+// data is the output
+// 12 byte number
 // data is the output
 // 12 byte number
 #define RAND_Z_SIZE 8
@@ -78,12 +88,15 @@ uint8_t RAND_Y[RAND_Z_SIZE];
 
 // AES Macros
 #define AES_SIZE 16 // 16 bytes
+#define AES_SIZE 16 // 16 bytes
 
 uint8_t synthesized =
     0; // when you initiate any command from the host machine, check if the
        // thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
+/******************************** TYPE DEFINITIONS
+ * ********************************/
 /******************************** TYPE DEFINITIONS
  * ********************************/
 // Data structure for sending commands to component
@@ -109,6 +122,8 @@ typedef struct {
 
 flash_entry flash_status;
 
+flash_entry flash_status;
+
 // Datatype for commands sent to components
 typedef enum {
     COMPONENT_CMD_NONE,
@@ -118,7 +133,23 @@ typedef enum {
     COMPONENT_CMD_ATTEST,
     COMPONENT_CMD_SECURE_SEND_VALIDATE,
     COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
+
+// forward declaration
+int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive);
+void flash_simple_init(void);
+int flash_simple_erase_page(uint32_t address);
+void flash_simple_read(uint32_t address, uint32_t *buffer, uint32_t size);
+int flash_simple_write(uint32_t address, uint32_t *buffer, uint32_t size);
+int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
+                uint8_t *ciphertext);
 
 /******************************* POST BOOT FUNCTIONALITY
  * *********************************/
@@ -137,56 +168,58 @@ typedef enum {
  */
 int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer,
                             uint8_t *receive_buffer) {
+int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer,
+                            uint8_t *receive_buffer) {
     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
 
-    message *send_packet = (message *)challenge_buffer;
+    message *send_packet_chlg = (message *)challenge_buffer;
     Rand_ASYC(RAND_Z, RAND_Z_SIZE);
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
-    strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
+    send_packet_chlg->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    *send_packet_chlg->rand_z = *RAND_Z;
 
-    int len = issue_cmd(address, challenge_buffer, answer_buffer);
-    if (len == ERROR_RETURN) {
+    int len_chlg = issue_cmd(address, challenge_buffer, answer_buffer);
+    if (len_chlg == ERROR_RETURN) {
         print_error("Failed to validate the secure send for post boot\n");
         return ERROR_RETURN;
     }
 
-    message *response = (message *)answer_buffer;
+    message *response_ans = (message *)answer_buffer;
     // compare cmd code
-    if (response->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
+    if (response_ans->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
         print_error("Invalid command message from component");
     }
 
     // compare Z value
-    if (strncmp(response->rand_z, RAND_Z, RAND_Z_SIZE)) {
+    if (response_ans->rand_z != RAND_Z) {
         print_error("AP received expired validate message in post boot");
         return ERROR_RETURN;
     }
 
-    message *send_packet = (message *)transmit_buffer;
-    strncpy(response->rand_y, RAND_Y, RAND_Z_SIZE);
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
-    strncpy(send_packet->rand_z, RAND_Z, RAND_Z_SIZE);
-    strncpy(send_packet->rand_y, RAND_Y, RAND_Z_SIZE);
+    message *send_packet_trans = (message *)transmit_buffer;
+    *response_ans->rand_y = *RAND_Y;
+    send_packet_trans->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    *send_packet_trans->rand_z = *RAND_Z;
+    *send_packet_trans->rand_y = *RAND_Y;
 
-    int len2 = issue_cmd(address, transmit_buffer, receive_buffer);
-    if (len2 == ERROR_RETURN) {
+    int len_trans = issue_cmd(address, transmit_buffer, receive_buffer);
+    if (len_trans == ERROR_RETURN) {
         print_error("Failed to send and receive for post boot\n");
         return ERROR_RETURN;
     }
 
-    message *response2 = (message *)receive_buffer;
+    message *response_rec = (message *)receive_buffer;
     // compare cmd code
-    if (response2->opcode != COMPONENT_CMD_SECURE_SEND_CONFIMRED) {
+    if (response_rec->opcode != COMPONENT_CMD_SECURE_SEND_CONFIMRED) {
         print_error("Invalid command message from component");
         return ERROR_RETURN;
     }
     // compare Y value
-    if (response2->rand_y != RAND_Y) {
+    if (response_rec->rand_y != RAND_Y) {
         print_error("AP received expired confirm message in post boot");
         return ERROR_RETURN;
     }
-    return len2;
+    return len_trans; // TODO: i believe this is transmitted length? - AJ
 }
 
 /**
@@ -247,6 +280,9 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     int result = secure_send_packet(
         addr, sizeof(uint8_t), transmit,
         GLOBAL_KEY); // maybe change the length of packet to 16?
+    int result = secure_send_packet(
+        addr, sizeof(uint8_t), transmit,
+        GLOBAL_KEY); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -254,9 +290,12 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Receive message
     int len = secure_poll_and_receive_packet(
         addr, receive, GLOBAL_KEY); // Use secure custom function
+    int len = secure_poll_and_receive_packet(
+        addr, receive, GLOBAL_KEY); // Use secure custom function
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
+    return len;
     return len;
 }
 
@@ -288,9 +327,9 @@ int scan_components() {
         uint8_t msg[AES_SIZE];
         uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
-        // Calling simple_crypto.c
+        //Calling simple_crypto.c
         encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
-        // uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         // put ciphertext in transmit_buffer memcpy
         for (int i = 0; i < AES_SIZE; i++) {
@@ -306,7 +345,7 @@ int scan_components() {
         // Success, device is present
         if (len > 0) {
             message *scan = (message *)receive_buffer;
-            print_info("F>0x%08x\n", scan->component_id);
+            print_info("F>0x%08x\n", scan->comp_ID);
         }
     }
     print_success("List\n");
@@ -321,8 +360,8 @@ int validate_and_boot_components() {
     // Send validate command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         // Set the I2C address of the component
-        uint32_t component_id = flash_status.component_ids[i] i2c_addr_t addr =
-            component_id_to_i2c_addr(component_id);
+        uint32_t component_id = flash_status.component_ids[i]
+        i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
         // Create Validate and boot message
         message *command = (message *)transmit_buffer;
@@ -339,7 +378,7 @@ int validate_and_boot_components() {
         Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
         // rand_z
-        command->rand_z = RAND_Z;
+        command->rand_z = RAND_Z
 
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -377,47 +416,52 @@ int attest_component(uint32_t component_id) {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    // Set the I2C address of the component
-    i2c_addr_t addr = component_id_to_i2c_addr(component_id);
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        // Set the I2C address of the component
+        i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
-    // Create Validate and boot message
-    message *command = (message *)transmit_buffer;
+        // Create Validate and boot message
+        message *command = (message *)transmit_buffer;
 
-    transmit_buffer[MAX_I2C_MESSAGE_LEN];
+        // transmit_buffer[MAX_I2C_MESSAGE_LEN]; // TODO: no effect anyways - AJ
 
-    // Comp_ID
-    uint32_t cid = flash_status.component_ids[i];
+        // Comp_ID
+        uint32_t cid = flash_status.component_ids[i];
 
-    // opcode
-    command->opcode = COMPONENT_CMD_ATTEST;
+        // op_code
+        command->opcode = COMPONENT_CMD_ATTEST;
 
-    // comp_ID
-    command->comp_ID = cid;
+        // comp_ID
+        command->comp_ID = cid;
 
-    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+        Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
-    // rand_z
-    command->rand_z = RAND_Z;
+        // rand_z
+        *command->rand_z = *RAND_Z;
 
-    // Send out command and receive result
-    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-    if (len == ERROR_RETURN) {
-        print_error("Could not attest\n");
-        return ERROR_RETURN;
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Could not attest\n");
+            return ERROR_RETURN;
+        }
+
+        // decrypt attestation data
+        message *response = (message *)receive_buffer;
+
+        // compare Z value
+        if (response->rand_z != RAND_Z) {
+            print_error("Random number provided is invalid");
+            return ERROR_RETURN;
+        }
+        // Print out attestation data
+        // TODO: it was originally right above the SUCCESS_RETURN, if you want
+        // these to keep below the for loop, we need to store the values from
+        // the receive_buffer - AJ
+        print_info("C>0x%08x\n", component_id);
+        print_info("%s", response->remain);
     }
 
-    // decrypt attestation data
-    message *response = (message *)receive_buffer;
-
-    // compare Z value
-    if (response->rand_z != RAND_Z) {
-        print_error("Random number provided is invalid");
-        return ERROR_RETURN;
-    }
-
-    // Print out attestation data
-    print_info("C>0x%08x\n", component_id);
-    print_info("%s", response->remain);
     return SUCCESS_RETURN;
 }
 

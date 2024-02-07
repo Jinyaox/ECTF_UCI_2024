@@ -30,7 +30,6 @@
 #include "board_link.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
-#include "op_codes.h"
 
 #ifdef CRYPTO_EXAMPLE
 #include "simple_crypto.h"
@@ -81,7 +80,7 @@ uint8_t RAND_Y[RAND_Z_SIZE];
 uint8_t synthesized=0; // when you initiate any command from the host machine, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
-flash_entry flash_status;
+
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
@@ -106,16 +105,16 @@ typedef struct {
 
 // Datatype for commands sent to components
 typedef enum {
-    uint8_t COMPONENT_CMD_NONE,
-    uint8_t COMPONENT_CMD_SCAN,
-    uint8_t COMPONENT_CMD_VALIDATE,
-    uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST,
-    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
-    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-
+flash_entry flash_status;
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send and Receive

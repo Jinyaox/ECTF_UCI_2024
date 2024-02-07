@@ -127,7 +127,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
 
-    message *send_packet_chlg = (message *)challenge_buffer;
+    message* send_packet_chlg = (message*)challenge_buffer;
     Rand_ASYC(RAND_Z, RAND_Z_SIZE);
     send_packet_chlg->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
     *send_packet_chlg->rand_z = *RAND_Z;
@@ -138,7 +138,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
         return ERROR_RETURN;
     }
 
-    message *response_ans = (message *)answer_buffer;
+    message* response_ans = (message*)answer_buffer;
     // compare cmd code
     if (response_ans->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
         print_error("Invalid command message from component");
@@ -150,7 +150,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
         return ERROR_RETURN;
     }
 
-    message *send_packet_trans = (message *)transmit_buffer;
+    message* send_packet_trans = (message*)transmit_buffer;
     *response_ans->rand_y = *RAND_Y;
     send_packet_trans->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
     *send_packet_trans->rand_z = *RAND_Z;
@@ -162,7 +162,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
         return ERROR_RETURN;
     }
 
-    message *response_rec = (message *)receive_buffer;
+    message* response_rec = (message*)receive_buffer;
     // compare cmd code
     if (response_rec->opcode != COMPONENT_CMD_SECURE_SEND_CONFIMRED) {
         print_error("Invalid command message from component");
@@ -267,13 +267,13 @@ int scan_components() {
         }
 
         // Create command message
-        message *command = (message *)transmit_buffer;
+        message* command = (message*)transmit_buffer;
 
         uint8_t msg[AES_SIZE];
         uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
-        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         // put ciphertext in transmit_buffer memcpy
@@ -289,7 +289,7 @@ int scan_components() {
 
         // Success, device is present
         if (len > 0) {
-            message *scan = (message *)receive_buffer;
+            message* scan = (message*)receive_buffer;
             print_info("F>0x%08x\n", scan->comp_ID);
         }
     }
@@ -309,7 +309,7 @@ int validate_and_boot_components() {
         i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
         // Create Validate and boot message
-        message *command = (message *)transmit_buffer;
+        message* command = (message*)transmit_buffer;
 
         // Comp_ID
         uint32_t cid = flash_status.component_ids[i];
@@ -332,7 +332,7 @@ int validate_and_boot_components() {
             return ERROR_RETURN;
         }
 
-        message *response = (message *)receive_buffer;
+        message* response = (message* )receive_buffer;
 
         // compare cmd code
         if (response->opcode != COMPONENT_CMD_BOOT) {
@@ -365,7 +365,7 @@ int attest_component(uint32_t component_id) {
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
     // Create Validate and boot message
-    message *command = (message *)transmit_buffer;
+    message* command = (message*)transmit_buffer;
 
     // op_code
     command->opcode = COMPONENT_CMD_ATTEST;
@@ -386,7 +386,7 @@ int attest_component(uint32_t component_id) {
     }
 
     // decrypt attestation data
-    message *response = (message *)receive_buffer;
+    message* response = (message*)receive_buffer;
 
     // compare Z value
     if (response->rand_z != RAND_Z) {

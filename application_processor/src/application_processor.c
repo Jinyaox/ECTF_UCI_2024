@@ -332,7 +332,7 @@ int validate_and_boot_components() {
         command->opcode = COMPONENT_CMD_VALIDATE;
 
         // comp_ID
-        command->comp_ID = component_id;
+        uint32_to_uint8(command->comp_ID, component_id);
 
         Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
@@ -355,7 +355,7 @@ int validate_and_boot_components() {
         }
 
         // compare cid
-        if (response->comp_ID != component_id) {
+        if (!uint8_uint32_cmp(response->comp_ID, component_id)) {
             print_error("Component ID: 0x%08x invalid\n",
                         flash_status.component_ids[i]);
             return ERROR_RETURN;
@@ -385,7 +385,7 @@ int attest_component(uint32_t component_id) {
     command->opcode = COMPONENT_CMD_ATTEST;
 
     // comp_ID
-    command->comp_ID = component_id;
+    uint32_to_uint8(command->comp_ID, component_id);
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 

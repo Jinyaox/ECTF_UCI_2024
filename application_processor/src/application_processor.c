@@ -74,10 +74,10 @@ uint8_t GLOBAL_KEY[AES_SIZE];
 // Data type for all commands
 typedef struct {
     uint8_t opcode;
-    uint32_t comp_ID;
+    uint8_t comp_ID[4];
     uint8_t rand_z[RAND_Z_SIZE];
     uint8_t rand_y[RAND_Z_SIZE];
-    uint8_t remain[MAX_I2C_MESSAGE_LEN - 21];
+    uint8_t remain[MAX_I2C_MESSAGE_LEN   - 21];
 } message;
 
 // Datatype for information stored in flash
@@ -311,14 +311,11 @@ int validate_and_boot_components() {
         // Create Validate and boot message
         message* command = (message*)transmit_buffer;
 
-        // Comp_ID
-        uint32_t cid = flash_status.component_ids[i];
-
         // opcode
         command->opcode = COMPONENT_CMD_VALIDATE;
 
         // comp_ID
-        command->comp_ID = cid;
+        command->comp_ID = component_id;
 
         Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
@@ -341,7 +338,7 @@ int validate_and_boot_components() {
         }
 
         // compare cid
-        if (response->comp_ID != cid) {
+        if (response->comp_ID != component_id) {
             print_error("Component ID: 0x%08x invalid\n",
                         flash_status.component_ids[i]);
             return ERROR_RETURN;

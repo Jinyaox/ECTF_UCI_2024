@@ -84,7 +84,6 @@ uint8_t synthesized =
        // thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
-flash_entry flash_status;
 /******************************** TYPE DEFINITIONS
  * ********************************/
 // Data structure for sending commands to component
@@ -107,6 +106,8 @@ typedef struct {
     uint32_t component_cnt;
     uint32_t component_ids[32];
 } flash_entry;
+
+flash_entry flash_status;
 
 // Datatype for commands sent to components
 typedef enum {

@@ -153,3 +153,4 @@ int secure_poll_and_receive_packet(i2c_addr_t address, uint8_t *buffer,
     memmove(buffer, plaintext, MAX_I2C_MESSAGE_LEN);
     return len;
 }
+

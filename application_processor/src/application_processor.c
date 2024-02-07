@@ -388,51 +388,47 @@ int attest_component(uint32_t component_id) {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        // Set the I2C address of the component
-        i2c_addr_t addr = component_id_to_i2c_addr(component_id);
+    // Set the I2C address of the component
+    i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
-        // Create Validate and boot message
-        message *command = (message *)transmit_buffer;
+    // Create Validate and boot message
+    message *command = (message *)transmit_buffer;
 
-        // transmit_buffer[MAX_I2C_MESSAGE_LEN]; // TODO: no effect anyways - AJ
+    // Comp_ID
+    uint32_t cid = flash_status.component_ids[component_id];
 
-        // Comp_ID
-        uint32_t cid = flash_status.component_ids[i];
+    // op_code
+    command->opcode = COMPONENT_CMD_ATTEST;
 
-        // op_code
-        command->opcode = COMPONENT_CMD_ATTEST;
+    // comp_ID
+    command->comp_ID = cid;
 
-        // comp_ID
-        command->comp_ID = cid;
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
-        Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    // rand_z
+    *command->rand_z = *RAND_Z;
 
-        // rand_z
-        *command->rand_z = *RAND_Z;
-
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-        if (len == ERROR_RETURN) {
-            print_error("Could not attest\n");
-            return ERROR_RETURN;
-        }
-
-        // decrypt attestation data
-        message *response = (message *)receive_buffer;
-
-        // compare Z value
-        if (response->rand_z != RAND_Z) {
-            print_error("Random number provided is invalid");
-            return ERROR_RETURN;
-        }
-        // Print out attestation data
-        // TODO: it was originally right above the SUCCESS_RETURN, if you want
-        // these to keep below the for loop, we need to store the values from
-        // the receive_buffer - AJ
-        print_info("C>0x%08x\n", component_id);
-        print_info("%s", response->remain);
+    // Send out command and receive result
+    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+    if (len == ERROR_RETURN) {
+        print_error("Could not attest\n");
+        return ERROR_RETURN;
     }
+
+    // decrypt attestation data
+    message *response = (message *)receive_buffer;
+
+    // compare Z value
+    if (response->rand_z != RAND_Z) {
+        print_error("Random number provided is invalid");
+        return ERROR_RETURN;
+    }
+    // Print out attestation data
+    // TODO: it was originally right above the SUCCESS_RETURN, if you want
+    // these to keep below the for loop, we need to store the values from
+    // the receive_buffer - AJ
+    print_info("C>0x%08x\n", component_id);
+    print_info("%s", response->remain);
 
     return SUCCESS_RETURN;
 }

@@ -3,7 +3,7 @@ extern flash_status;
 #include "ectf_params.h" //to get to all the macros
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
-#include "XOR.h"
+#include "xor.h"
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 

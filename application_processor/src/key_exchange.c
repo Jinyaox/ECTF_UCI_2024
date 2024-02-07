@@ -2,14 +2,14 @@ extern flash_status;
 #include "Rand_lib.h"
 #include "board_link.h"
 #include "ectf_params.h" //to get to all the macros
-#include "simple_i2c_peripheral.h"
+#include "simple_i2c_controller.h"
 #include "xor.h"
 
 // premise the simple write and receive is sufficient to send a 16 byte stream
 // this assumes the key is 16 bytes
 void key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
-    i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[0]);
+    i2c_addr_t addr = component_id_to_i2c_addr(component_id);
     XOR(M1, KEY_SHARE, 16, cache);
     cache[17] = '1';
 
@@ -28,7 +28,7 @@ void key_exchange1(unsigned char *dest, uint32_t component_id) {
     }
 }
 
-void key_exchange2(unsigned char *dest, char *random;
+void key_exchange2(unsigned char *dest, char *random,
                    uint32_t component_id1, uint32_t component_id2) {
     // Allocation Temp Caches
     char cache1[18]; // this stores K1

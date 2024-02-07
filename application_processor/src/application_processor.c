@@ -207,12 +207,11 @@ int get_provisioned_ids(uint32_t *buffer) {
 }
 
 /********************************* UTILITIES **********************************/
+//
 
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces
 void init() {
-    // Disable the cache?
-    disable_cache();
 
     // Enable global interrupts
     __enable_irq();

@@ -44,6 +44,8 @@
 #include "disable_cache.h"
 #include "ectf_params.h"
 
+#include "simple_flash.h"
+
 /********************************* Global Variables
  * **********************************/
 

@@ -105,6 +105,7 @@ int timed_wait_and_receive_packet(uint8_t* packet) {
  * send a packet to the AP and wait for the message to be received
 */
 void secure_send_packet_and_ack(uint8_t len, uint8_t* packet, uint8_t* GLOBAL_KEY) {
+    uint8_t ciphertext[len];
     encrypt_sym(packet, len, GLOBAL_KEY, ciphertext);
     send_packet_and_ack(len, ciphertext);
 }
@@ -133,5 +134,5 @@ int secure_timed_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY) {
         decrypt_sym(packet, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, plaintext);
         memmove(packet, plaintext, MAX_I2C_MESSAGE_LEN);
     }
-    return int;
+    return len;
 }

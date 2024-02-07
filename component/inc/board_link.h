@@ -10,11 +10,11 @@
  *
  * @copyright Copyright (c) 2024 The MITRE Corporation
  */
-
 #ifndef __BOARD_LINK__
 #define __BOARD_LINK__
 
 #include "simple_i2c_peripheral.h"
+#include "simple_crypto.h"
 
 /******************************** MACRO DEFINITIONS ********************************/
 // Last byte of the component ID is the I2C address

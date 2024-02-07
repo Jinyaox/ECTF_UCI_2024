@@ -1,7 +1,7 @@
 #ifndef __byte_stream_XOR__
 #define __byte_stream_XOR__
 
-void XOR(unsigned char* arr1, unsigned char* arr2, int size, unsigned char* dest){
+void XOR_secure(unsigned char* arr1, unsigned char* arr2, int size, unsigned char* dest){
     /*
     Xor two bytes array correspondingly and write the final result to the dest array
     Helper function 

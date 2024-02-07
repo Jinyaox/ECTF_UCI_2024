@@ -31,7 +31,6 @@
 #include "disable_cache.h"
 #include "Rand_lib.h"
 #include "key_exchange.h"
-#include "op_codes.h"
 
 
 #ifdef POST_BOOT
@@ -54,19 +53,22 @@
 */
 //AES
 #define AES_SIZE 16// 16 bytes
+#define RAND_Z_SIZE 16
+#define RAND_Y_SIZE 16
+uint8_t RAND_Y[RAND_Y_SIZE];
 uint8_t GLOBAL_KEY[AES_SIZE];
-uint8_t synthesized=0; 
+uint8_t synthesized=0;
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
-    uint8_t COMPONENT_CMD_NONE,
-    uint8_t COMPONENT_CMD_SCAN,
-    uint8_t COMPONENT_CMD_VALIDATE,
-    uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST,
-    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
-    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS ********************************/
@@ -74,8 +76,8 @@ typedef enum {
 typedef struct {
     uint8_t opcode;
     uint32_t comp_ID;
-    uint8_t rand_z[RAND_Z_SIZE]
-    uint8_t rand_y[RAND_Z_SIZE]
+    uint8_t rand_z[RAND_Z_SIZE];
+    uint8_t rand_y[RAND_Z_SIZE];
     uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
 } message;
 
@@ -126,27 +128,27 @@ int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 // Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
 void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
     memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
-    secure_wait_and_receive_packet(receive_buffer);
+    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message * command = (message *)receive_buffer;
     Rand_ASYC(RAND_Y, RAND_Y_SIZE);
     uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
     message * send_packet = (message *)validate_buffer;
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
-    send_packet->rand_z = command->rand_z;
-    send_packet->rand_y = RAND_Y;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
+    memcpy(send_packet->rand_y, RAND_Y, RAND_Y_SIZE);
     secure_send_packet_and_ack(sizeof(validate_buffer), validate_buffer, GLOBAL_KEY);
     memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
     if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
         print_error("Component transmitting failed, the transmitting takes too long");
         return;
     }
-    message * command = (message*) receive_buffer;
+    command = (message*) receive_buffer;
     if(command->rand_y != RAND_Y){
         print_error("Component has received expired message");
     }
-    message * send_packet = (message *)transmit_buffer;
+    send_packet = (message *)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
-    send_packet->rand_z = command->rand_z;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
 /******************************* FUNCTION DEFINITIONS *********************************/
@@ -220,8 +222,8 @@ void process_boot() {
     //Send Boot comfirmation message back to AP
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
-    send_packet->opcode = COMPONENET_CMD_BOOT;
-    send_packet->rand_z = command->rand_z;
+    send_packet->opcode = COMPONENT_CMD_BOOT;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     send_packet->comp_ID = send_packet->comp_ID;
     secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
@@ -233,7 +235,7 @@ void process_scan() {
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SCAN;
-    send_packet->rand_z = command->rand_z;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     send_packet->comp_ID = COMPONENT_ID;
     secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
@@ -259,9 +261,9 @@ void process_attest() {
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     message* send_packet = (message*)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_ATTEST;
-    send_packet->rand_z = command->rand_z;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     send_packet->comp_ID = COMPONENT_ID;
-    send_packet->remain = string_buffer;
+    memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
     secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
 

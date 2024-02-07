@@ -1,8 +1,8 @@
 #ifndef __ECTF_PARAMS__
 #define __ECTF_PARAMS__
 #define AP_PIN "123456"
-#define AP_TOKEN "0123456789abcdef" 
-#define COMPONENT_IDS 0x11111124 0x11111125
+#define AP_TOKEN "0123456789abcdef"
+#define COMPONENT_IDS 0x11111124, 0x11111125
 #define COMPONENT_CNT 2
 #define AP_BOOT_MSG "Test boot message"
 #define KEY_SHARE { 0x4A, 0x52, 0x27, 0xF4, 0xAA, 0xEB, 0x1B, 0x51, 0x14, 0x68, 0xD5, 0xFE, 0xBC, 0xDB, 0x53, 0xFB }

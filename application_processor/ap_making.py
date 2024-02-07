@@ -38,9 +38,9 @@ def gen_AES_key(shares:list):
     return result # this is the K = k1 ^ k2 ^ k3
 
 
-def change_byte_to_macro(byte_stream, name)->str:
+def change_byte_to_const(byte_stream, name)->str:
     hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
-    macro_string = f"#define {name} {{ {hex_representation} }}"
+    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
     return macro_string
 
 
@@ -146,79 +146,82 @@ def write_key_to_files(file_paths:list)->None:
     """
     
     shares=None
-    key=None
+    # key=None
     comp_val=0
     masks=None
     if len(file_paths)==1:
         masks=gen_masks(1)
         comp_val=1
         shares=create_shares(16,2)
-        key=gen_AES_key(shares)
+        # key=gen_AES_key(shares)
 
         # Write the keys into the Component file
         f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
-        f.write(key)
+        f.write("something".encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(shares[1],"KEY_SHARE").encode())
-        f.write(change_byte_to_macro(masks[0],"MASK").encode())
-        f.write(change_byte_to_macro(masks[1],"FINAL_MASK").encode())
+        f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
+        f.write(change_byte_to_const(masks[0],"MASK").encode())
+        f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
         f.close()
     
     else:
         comp_val=2
         shares=create_shares(16,3)
         key=gen_AES_key(shares)
-        #print(change_byte_to_macro(key,"KEY").encode())
         masks=gen_masks(2)
 
         # Write the keys into the Component file
         f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
         f.write("something".encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(shares[1],"KEY_SHARE").encode())
+        f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(masks[0],"MASK").encode())
+        f.write(change_byte_to_const(masks[0],"MASK").encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(masks[1],"FINAL_MASK").encode())
+        f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
         f.close()
 
         f = open(Path(f"../deployment/{macro_information['ids'][1]}.txt"), "wb")
         f.write("something".encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(shares[2],"KEY_SHARE").encode())
+        f.write(change_byte_to_const(shares[2],"KEY_SHARE").encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(masks[2],"MASK").encode())
+        f.write(change_byte_to_const(masks[2],"MASK").encode())
         f.write(b'\n')
-        f.write(change_byte_to_macro(masks[3],"FINAL_MASK").encode())
+        f.write(change_byte_to_const(masks[3],"FINAL_MASK").encode())
         f.close()
 
     # Finally write the keys into the AP's parameter header
-    fh = open("inc/ectf_params.h", "w")
-    fh.write("#ifndef __ECTF_PARAMS__\n")
-    fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define AP_PIN \"{macro_information['pin']}\""+"\n")
-    fh.write(f"#define AP_TOKEN \"{macro_information['token']}\" "+"\n")
-    if comp_val==2:
-        fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
-    else:
-        fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]}\n") 
+    # fh = open("inc/ectf_params.h", "w")
+    # fh.write("#ifndef __ECTF_PARAMS__\n")
+    # fh.write("#define __ECTF_PARAMS__\n")
+    # fh.write(f"#define AP_PIN \"{macro_information['pin']}\""+"\n")
+    # fh.write(f"#define AP_TOKEN \"{macro_information['token']}\" "+"\n")
+    # if comp_val==2:
+    #     fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
+    # else:
+    #     fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]}\n") 
         
-    fh.write(f"#define COMPONENT_CNT {macro_information['cnt']}\n")
-    fh.write(f"#define AP_BOOT_MSG \"{macro_information['message']}\"\n")
-    fh.write(change_byte_to_macro(shares[0],"KEY_SHARE")+"\n")
+    # fh.write(f"#define COMPONENT_CNT {macro_information['cnt']}\n")
+    # fh.write(f"#define AP_BOOT_MSG \"{macro_information['message']}\"\n")
+    # fh.write("#endif\n")
+    # fh.close()
     
+    fh = open("./inc/key.h", "w")
+    fh.write("#ifndef __KEY__\n")
+    fh.write("#define __KEY__\n")
+    fh.write("#include <stdint.h> \n")
+    fh.write(change_byte_to_const(shares[0],"KEY_SHARE")+"\n")
     if comp_val==1:
-        fh.write(change_byte_to_macro(masks[0],f"M1")+"\n")
-        fh.write(change_byte_to_macro(masks[1],"F1")+"\n")
+        fh.write(change_byte_to_const(masks[0],f"M1")+"\n")
+        fh.write(change_byte_to_const(masks[1],"F1")+"\n")
     else:
-        fh.write(change_byte_to_macro(masks[0],f"M1")+"\n")
-        fh.write(change_byte_to_macro(masks[1],f"F1")+"\n")
-        fh.write(change_byte_to_macro(masks[2],f"M2")+"\n")
-        fh.write(change_byte_to_macro(masks[3],f"F2")+"\n")
-    
+        fh.write(change_byte_to_const(masks[0],f"M1")+"\n")
+        fh.write(change_byte_to_const(masks[1],f"F1")+"\n")
+        fh.write(change_byte_to_const(masks[2],f"M2")+"\n")
+        fh.write(change_byte_to_const(masks[3],f"F2")+"\n")
     fh.write("#endif\n")
     fh.close()
-
 
 
 # ------------------------------ End of Previous Deinition, this is the main file -----------------------------------

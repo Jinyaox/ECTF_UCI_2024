@@ -75,7 +75,7 @@ typedef enum {
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
-    uint32_t comp_ID;
+    uint8_t comp_ID[4];
     uint8_t rand_z[RAND_Z_SIZE];
     uint8_t rand_y[RAND_Z_SIZE];
     uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
@@ -153,6 +153,25 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
 }
 /******************************* FUNCTION DEFINITIONS *********************************/
 
+
+/*Tested converters*/
+void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
+    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+}
+
+void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
+    *str_uint32 = 0; // Initialize to zero
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+}
+
+/*Return 1 if the same and 0 if different*/
+int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
+    int counter = 0;
+    for(int i = 0; i < 4; i++)
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+    return counter == 4;
+}
+
 // Example boot sequence
 // Your design does not need to change this
 void boot() {
@@ -212,7 +231,7 @@ void process_boot() {
     //Validate the Component ID
     message* command = (message*) receive_buffer;
 
-    if(command->comp_ID != COMPONENT_ID){
+    if(uint8_uint32_cmp(command->comp_ID,COMPONENT_ID)){
         printf("The Component ID checks failed at the component sided");
         return;
     }
@@ -224,7 +243,7 @@ void process_boot() {
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = send_packet->comp_ID;
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
     secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 
@@ -236,7 +255,7 @@ void process_scan() {
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SCAN;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = COMPONENT_ID;
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
     secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 
@@ -262,7 +281,7 @@ void process_attest() {
     message* send_packet = (message*)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_ATTEST;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = COMPONENT_ID;
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
     memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
     secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }

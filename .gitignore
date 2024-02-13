@@ -369,4 +369,7 @@ cython_debug/
 msdk/
 
 ## key_share and key_mask files
-deployment/*.txt
+deployment/0x11111124.txt
+deployment/0x11111125.txt
+application_processor/inc/key.h
+component/inc/key.h

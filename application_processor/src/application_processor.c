@@ -213,6 +213,7 @@ int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
     return counter == 4;
 }
 
+
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces
 void init() {
@@ -585,10 +586,11 @@ int main() {
     char buf[100];
     while (1) {
         memset(buf, 0, 100);
-        recv_input("Enter Command: ", buf);
+        //recv_input("Enter Command: ", buf);
 
         // Shouldn't the merging happen here?
-        if ((synthesized == 0) && (strlen(buf) != 0)) {
+        //&& (strlen(buf) != 0
+        if ((synthesized == 0) ) {
             key_sync(GLOBAL_KEY, flash_status.component_cnt,
                      flash_status.component_ids[0],
                      flash_status.component_ids[1]);

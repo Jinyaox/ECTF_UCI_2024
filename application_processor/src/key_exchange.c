@@ -5,31 +5,29 @@ extern flash_status;
 #include "simple_i2c_controller.h"
 #include "xor.h"
 #include "key.h"
+#include "key_exchange.h"
+
 
 // premise the simple write and receive is sufficient to send a 16 byte stream
 // this assumes the key is 16 bytes
-void key_exchange1(unsigned char *dest, uint32_t component_id) {
+char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
-    XOR(M1, KEY_SHARE, 16, cache);
-    cache[17] = '1';
+    XOR_secure(M1, KEY_SHARE, 16, cache);
+    cache[17] = '2';
 
-    int return_status = send_packet(addr, 17, cache);
-    ;
-
+    int return_status = send_packet(addr, 18, cache);
+    
+    memset(cache, 0, 18);
     int len = poll_and_receive_packet(addr, cache);
-    if (len == 16) {
-        XOR(KEY_SHARE, cache, 16, cache);
-        XOR(cache, F1, 16, cache); // Should be the dest for the fourth
-                                   // argument?
-        return;
-    } else {
-        //print_info("receiving length ERROR :( ");
-        return;
-    }
+    
+    XOR_secure(KEY_SHARE, cache, 16, cache);
+    XOR_secure(cache, F1, 16, cache); // Should be the dest for the fourth
+                                // argument?
+    return;
 }
 
-void key_exchange2(unsigned char *dest, char *random,
+char* key_exchange2(unsigned char *dest, char *random,
                    uint32_t component_id1, uint32_t component_id2) {
     // Allocation Temp Caches
     char cache1[18]; // this stores K1
@@ -37,12 +35,12 @@ void key_exchange2(unsigned char *dest, char *random,
 
     // deal with the first component to obtain k1
     i2c_addr_t addr = component_id_to_i2c_addr(component_id1);
-    XOR(random, KEY_SHARE, 16, cache1);
+    XOR_secure(random, KEY_SHARE, 16, cache1);
     cache1[17] = '2';
-    int result = send_packet(addr, 17, cache1);
+    int result = send_packet(addr, 18, cache1);
     int len = poll_and_receive_packet(addr, cache1);
     if (len == 16) {
-        XOR(M1, cache1, 16, cache1);
+        XOR_secure(M1, cache1, 16, cache1);
     } else {
         //print_info("receiving length ERROR 1 :( \n");
         return;
@@ -50,14 +48,14 @@ void key_exchange2(unsigned char *dest, char *random,
 
     // deal with the second component to obtain k2
     i2c_addr_t addr2 = component_id_to_i2c_addr(component_id2);
-    XOR(random, KEY_SHARE, 16, cache2);
+    XOR_secure(random, KEY_SHARE, 16, cache2);
     cache2[17] = '2';
 
-    int return_status = send_packet(addr2, 17, cache2);
+    int return_status = send_packet(addr2, 18, cache2);
     int len2 = poll_and_receive_packet(addr2, cache2);
     if (len2 == 16) {
-        XOR(M2, cache1, 16, cache1);
-        XOR(cache1, cache2, 16, dest);
+        XOR_secure(M2, cache1, 16, cache1);
+        XOR_secure(cache1, cache2, 16, dest);
     } else {
         //print_info("receiving length ERROR 2 :( \n");
         return;
@@ -65,13 +63,13 @@ void key_exchange2(unsigned char *dest, char *random,
 
     // send out the last few pieces of keys to both sides
     // sends k_Comp2 f1 R
-    XOR(F1, cache2, 16, cache2);
-    XOR(cache2, random, 16, cache2);
+    XOR_secure(F1, cache2, 16, cache2);
+    XOR_secure(cache2, random, 16, cache2);
     int result2 = send_packet(addr, 16, cache2);
 
     // sends k_Comp1 f2 R
-    XOR(F1, cache2, 16, cache2);
-    XOR(cache2, random, 16, cache2);
+    XOR_secure(F1, cache2, 16, cache2);
+    XOR_secure(cache2, random, 16, cache2);
     int result3 = send_packet(addr, 16, cache2);
 
     return;

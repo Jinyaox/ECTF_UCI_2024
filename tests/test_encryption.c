@@ -49,7 +49,7 @@ typedef struct {
     uint8_t remain[MAX_I2C_MESSAGE_LEN   - 21];
 } message;
 
-int test_validate_and_boot_protocol():
+int test_validate_and_boot_protocol(){
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
@@ -69,11 +69,23 @@ int test_validate_and_boot_protocol():
         printf("%c", RAND_Z[x]);
     }
 
+    uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
+
+    encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
+    
+    for(int x = 0; x < MAX_I2C_MESSAGE_LEN; x++){
+        printf("%c", ciphertext[x]);
+    }
+    
+
+
 
     return SUCCESS_RETURN
-
-int test_attest_protocol():
+}
+int test_attest_protocol(){
     return SUCCESS_RETURN
+}
 
-int test_post_boot_protocol():
+int test_post_boot_protocol(){
     return SUCCESS_RETURN
+}

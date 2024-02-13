@@ -73,19 +73,23 @@ int test_validate_and_boot_protocol(){
 
     encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
     
+
+    printf("\n\nCiphertext: \n")
     for(int x = 0; x < MAX_I2C_MESSAGE_LEN; x++){
         printf("%c", ciphertext[x]);
     }
     
+    decrypt_sym(ciphertext, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, receive_buffer);
 
+    message* response = (message* )receive_buffer;
 
+    printf("Data after decryption:\n\n
+        opcode = %c\n
+        Comp_ID = %"PRIu32"\n
+        Rand_Z = ", response->opcode, COMP_ID1);
+    for(int x = 0; x < RAND_Z_SIZE; x++){
+        printf("%c", response->RAND_Z[x]);
+    }
 
-    return SUCCESS_RETURN
-}
-int test_attest_protocol(){
-    return SUCCESS_RETURN
-}
-
-int test_post_boot_protocol(){
     return SUCCESS_RETURN
 }

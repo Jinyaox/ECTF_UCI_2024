@@ -5,6 +5,7 @@ extern flash_status;
 #include "simple_i2c_peripheral.h"
 #include "xor.h"
 #include "key.h"
+#include "key_exchange.h"
 uint8_t transmit_buffer1[MAX_I2C_MESSAGE_LEN];
 uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
 

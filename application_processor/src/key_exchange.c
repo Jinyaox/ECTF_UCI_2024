@@ -5,10 +5,11 @@ extern flash_status;
 #include "simple_i2c_controller.h"
 #include "xor.h"
 #include "key.h"
+#include "key_exchange.h"
 
 // premise the simple write and receive is sufficient to send a 16 byte stream
 // this assumes the key is 16 bytes
-void key_exchange1(unsigned char *dest, uint32_t component_id) {
+char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
     XOR(M1, KEY_SHARE, 16, cache);
@@ -29,7 +30,7 @@ void key_exchange1(unsigned char *dest, uint32_t component_id) {
     }
 }
 
-void key_exchange2(unsigned char *dest, char *random,
+char* key_exchange2(unsigned char *dest, char *random,
                    uint32_t component_id1, uint32_t component_id2) {
     // Allocation Temp Caches
     char cache1[18]; // this stores K1
@@ -77,7 +78,7 @@ void key_exchange2(unsigned char *dest, char *random,
     return;
 }
 
-char *key_sync(unsigned char *dest, uint32_t component_cnt,
+char* key_sync(unsigned char *dest, uint32_t component_cnt,
                uint32_t component_id1, uint32_t component_id2) {
     char random_number[18];
     Rand_NASYC(random_number, 16);

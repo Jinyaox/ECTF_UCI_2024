@@ -1,6 +1,9 @@
 #include "aes.h"
 #include "Code_warehouse/c/Rand_lib.h"
 #include "application_processor/inc/simple_crypto.h"
+#include "stdio.h"
+#include "inttypes.h"
+
 
 /********************************* Global Variables **********************************/
 
@@ -47,6 +50,21 @@ typedef struct {
 } message;
 
 int test_validate_and_boot_protocol():
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    message* command = (message*)transmit_buffer;
+
+    command->opcode = COMPONENT_CMD_VALIDATE;
+    uint32_to_uint8(command->comp_ID, COMP_ID1);
+
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    *command->rand_z = *RAND_Z;
+
+    printf("Data before encryption:\n\n
+        opcode = %c\n
+        Comp_ID = %"PRIu32"\n", command->opcode, COMP_ID1)
+
     return SUCCESS_RETURN
 
 int test_attest_protocol():

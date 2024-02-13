@@ -1,13 +1,15 @@
 extern flash_status;
-#include "key_exchange.h"
 #include "ectf_params.h" //to get to all the macros
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
-#include "xor.h"
+#include "xor_secure.h"
 #include "key.h"
 #include "key_exchange.h"
+#include <stdio.h>
 uint8_t transmit_buffer1[MAX_I2C_MESSAGE_LEN];
 uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
+
+
 
 void sync2(char* dest, char* k2_m1){
     char cash_k2_r[18];
@@ -42,11 +44,12 @@ void sync1(char* dest, char* k2_m1){
 
 void key_sync(char* dest){
     uint8_t len=wait_and_receive_packet(receive_buffer1);
-    if(len!=17){
+    if(len!=18){
         //we have an error so just return
         return;
     }
-    switch (receive_buffer1[17])
+    char rv = receive_buffer1[17];
+    switch (rv)
     {
     case '1':
         sync1(dest,receive_buffer1);

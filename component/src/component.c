@@ -75,7 +75,7 @@ typedef enum {
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
-    uint32_t comp_ID;
+    uint8_t comp_ID[4];
     uint8_t rand_z[RAND_Z_SIZE];
     uint8_t rand_y[RAND_Z_SIZE];
     uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
@@ -127,7 +127,7 @@ int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 
 // Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
 void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
-    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
     secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message * command = (message *)receive_buffer;
     Rand_ASYC(RAND_Y, RAND_Y_SIZE);
@@ -136,22 +136,41 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     memcpy(send_packet->rand_y, RAND_Y, RAND_Y_SIZE);
-    secure_send_packet_and_ack(sizeof(validate_buffer), validate_buffer, GLOBAL_KEY);
-    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, validate_buffer, GLOBAL_KEY);
+    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
     if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
-        print_error("Component transmitting failed, the transmitting takes too long");
+        printf("Component transmitting failed, the transmitting takes too long");
         return;
     }
     command = (message*) receive_buffer;
     if(command->rand_y != RAND_Y){
-        print_error("Component has received expired message");
+        printf("Component has received expired message");
     }
     send_packet = (message *)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 /******************************* FUNCTION DEFINITIONS *********************************/
+
+
+/*Tested converters*/
+void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
+    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+}
+
+void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
+    *str_uint32 = 0; // Initialize to zero
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+}
+
+/*Return 1 if the same and 0 if different*/
+int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
+    int counter = 0;
+    for(int i = 0; i < 4; i++)
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+    return counter == 4;
+}
 
 // Example boot sequence
 // Your design does not need to change this
@@ -187,6 +206,8 @@ void boot() {
 
 // Handle a command from the AP
 void component_process_cmd() {
+    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message* command = (message*) receive_buffer;
 
     // Output to application processor dependent on command received
@@ -212,32 +233,32 @@ void process_boot() {
     //Validate the Component ID
     message* command = (message*) receive_buffer;
 
-    if(command->comp_ID != COMPONENT_ID){
-        print_error("The Component ID checks failed at the component sided");
+    if(uint8_uint32_cmp(command->comp_ID,COMPONENT_ID)){
+        printf("The Component ID checks failed at the component sided");
         return;
     }
     //Validation passed
     //Starts Boot
     boot();
     //Send Boot comfirmation message back to AP
-    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = send_packet->comp_ID;
-    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
+    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 
 void process_scan() {
     // The AP requested a scan. Respond with the Component ID
 
     message* command = (message*) receive_buffer;
-    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SCAN;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = COMPONENT_ID;
-    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
+    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 
 void process_attest() {
@@ -247,24 +268,24 @@ void process_attest() {
     message* command = (message*) receive_buffer;
 
     if(command->comp_ID != COMPONENT_ID){
-        print_error("The Component ID checks failed at the component sided");
+        printf("The Component ID checks failed at the component sided");
         return;
     }
 
     // Start to move atttestation data into the transmit_buffer
-    memset(string_buffer, 0, sizeof(string_buffer));
+    memset(string_buffer, 0, MAX_I2C_MESSAGE_LEN);
     uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     
 
     //Move the cipher text into the transmit_buffer and reday for transfer
-    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
     message* send_packet = (message*)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_ATTEST;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    send_packet->comp_ID = COMPONENT_ID;
+    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
     memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
-    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
 }
 
 

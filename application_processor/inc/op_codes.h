@@ -1,6 +1,0 @@
-#ifndef OPCODES
-
-#define OPCODES                                                                \
-    #define COMPONENT_CMD_NONE 'N' #define COMPONENT_CMD_SCAN 'S' #define COMPONENT_CMD_VALIDATE 'V' #define COMPONENT_CMD_BOOT 'B' #define COMPONENT_CMD_ATTEST 'A'
-
-#endif

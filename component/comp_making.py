@@ -103,9 +103,9 @@ def file_exist(file_path)->bool:
     else:
         return False
 
-def change_byte_to_macro(byte_stream, name)->str:
+def change_byte_to_const(byte_stream, name)->str:
     hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
-    macro_string = f"#define {name} {{ {hex_representation} }}"
+    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
     return macro_string
     
 def Read_files()->None:
@@ -117,9 +117,9 @@ def Read_files()->None:
         macro_information["mask"]=lines[2]
         macro_information["final"]=lines[3]
     else:
-        macro_information["share"]=change_byte_to_macro("0000000000000000".encode(),'KEY_SHARE')
-        macro_information["mask"]=change_byte_to_macro("0000000000000000".encode(),'MASK')
-        macro_information["final"]=change_byte_to_macro("0000000000000000".encode(),'FINAL_MASK')
+        macro_information["share"]=change_byte_to_const("0000000000000000".encode(),'KEY_SHARE')
+        macro_information["mask"]=change_byte_to_const("0000000000000000".encode(),'MASK')
+        macro_information["final"]=change_byte_to_const("0000000000000000".encode(),'FINAL_MASK')
 
 
 def write_key_to_files()->None:
@@ -137,6 +137,13 @@ def write_key_to_files()->None:
     fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
     fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
     fh.write(f"#define ATTESTATION_CUSTOMER \"{macro_information['customer']}\"\n") 
+    fh.write("#endif\n")
+    fh.close()
+
+    fh = open("inc/key.h", "w")
+    fh.write("#ifndef __KEY__\n")
+    fh.write("#define __KEY__\n")
+    fh.write("#include <stdint.h> \n")
     fh.write(macro_information["share"]+'\n')
     fh.write(macro_information["mask"]+'\n')
     fh.write(macro_information["final"]+'\n')    

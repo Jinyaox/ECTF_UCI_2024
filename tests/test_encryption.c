@@ -19,11 +19,13 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 #define ERROR_RETURN -1
 
 typedef enum {
-    uint8_t COMPONENT_CMD_NONE,
-    uint8_t COMPONENT_CMD_SCAN,
-    uint8_t COMPONENT_CMD_VALIDATE,
-    uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************** Testing Variables ********************************/
@@ -35,15 +37,14 @@ uint8_t GLOBAL_KEY[AES_SIZE]; // Need to define this better
 
 /******************************** TYPE DEFINITIONS ********************************/
 
-// structure for limited protocol: message[0] = op_code; message[1:4] = Comp_ID; message[5:12] RAND_Z
+// Datatype for all messages
 typedef struct {
-    uint8_t message[AES_SIZE];
-} limited_protocol;
-
-// structure
-typedef struct {
-    uint8_t message[MAX_I2C_MESSAGE_LEN]
-} maximum_protocol;
+    uint8_t opcode;
+    uint8_t comp_ID[4];
+    uint8_t rand_z[RAND_Z_SIZE];
+    uint8_t rand_y[RAND_Z_SIZE];
+    uint8_t remain[MAX_I2C_MESSAGE_LEN   - 21];
+} message;
 
 int test_validate_and_boot_protocol():
     return SUCCESS_RETURN

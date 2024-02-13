@@ -1,4 +1,3 @@
-extern flash_status;
 #include "Rand_lib.h"
 #include "board_link.h"
 #include "ectf_params.h" //to get to all the macros
@@ -7,6 +6,7 @@ extern flash_status;
 #include "key.h"
 #include "key_exchange.h"
 #include "key_exchange.h"
+
 
 
 // premise the simple write and receive is sufficient to send a 16 byte stream
@@ -78,7 +78,7 @@ char* key_exchange2(unsigned char *dest, char *random,
     return;
 }
 
-char* key_sync(unsigned char *dest, uint32_t component_cnt,
+char *key_sync(unsigned char *dest, uint32_t component_cnt,
                uint32_t component_id1, uint32_t component_id2) {
     char random_number[18];
     Rand_NASYC(random_number, 16);

@@ -63,7 +63,12 @@ int test_validate_and_boot_protocol():
 
     printf("Data before encryption:\n\n
         opcode = %c\n
-        Comp_ID = %"PRIu32"\n", command->opcode, COMP_ID1)
+        Comp_ID = %"PRIu32"\n
+        Rand_Z = ", command->opcode, COMP_ID1);
+    for(int x = 0; x < RAND_Z_SIZE; x++){
+        printf("%c", RAND_Z[x]);
+    }
+
 
     return SUCCESS_RETURN
 

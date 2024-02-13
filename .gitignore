@@ -368,7 +368,7 @@ cython_debug/
 !device/lib
 msdk/
 
-## key_share and key_mask files
+## Changed files everytime during build
 deployment/0x11111124.txt
 deployment/0x11111125.txt
 application_processor/inc/key.h

@@ -12,6 +12,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "board_link.h"
 

@@ -1,13 +1,36 @@
 extern flash_status;
-#include "key_exchange.h"
 #include "ectf_params.h" //to get to all the macros
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
-#include "xor.h"
+#include "xor_secure.h"
 #include "key.h"
 #include "key_exchange.h"
+#include <stdio.h>
 uint8_t transmit_buffer1[MAX_I2C_MESSAGE_LEN];
 uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
+
+
+// void XOR_secure(unsigned char* arr1, unsigned char* arr2, int size, unsigned char* dest){
+//     /*
+//     Xor two bytes array correspondingly and write the final result to the dest array
+//     Helper function 
+
+//     Inputs: 
+//         array1 in bytes eg: { 0xDF, 0x68, 0x06, 0x80, 0x0C, 0xAA } 
+//         array2 in bytes, same size as array 1 
+//         Size: len of any array
+//         Dest: result array
+    
+//     Outputs: None
+//     */
+
+//     for (int i = 0; i < size; i++) {
+//         dest[i] = arr1[i] ^ arr2[i];
+//     }
+//     return;
+// }
+
+
 
 void sync2(char* dest, char* k2_m1){
     char cash_k2_r[18];
@@ -42,11 +65,12 @@ void sync1(char* dest, char* k2_m1){
 
 void key_sync(char* dest){
     uint8_t len=wait_and_receive_packet(receive_buffer1);
-    if(len!=17){
+    if(len!=18){
         //we have an error so just return
         return;
     }
-    switch (receive_buffer1[17])
+    char rv = receive_buffer1[17];
+    switch (rv)
     {
     case '1':
         sync1(dest,receive_buffer1);

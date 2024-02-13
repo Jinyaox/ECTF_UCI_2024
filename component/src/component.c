@@ -206,6 +206,8 @@ void boot() {
 
 // Handle a command from the AP
 void component_process_cmd() {
+    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message* command = (message*) receive_buffer;
 
     // Output to application processor dependent on command received

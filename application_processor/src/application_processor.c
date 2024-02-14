@@ -110,6 +110,36 @@ int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
+ * @brief Secure Send 
+ * 
+ * @param address: i2c_addr_t, I2C address of recipient
+ * @param transmit_buffer: uint8_t*, pointer to data to be send
+ * @param len: uint8_t, size of data to be sent 
+ * 
+ * Securely send data over I2C. This function is utilized in POST_BOOT functionality.
+ * This function must be implemented by your team to align with the security requirements.
+
+*/
+int secure_send(uint8_t address, uint8_t *transmit_buffer, uint8_t len) {
+    return send_packet(address, len, buffer);
+}
+
+/**
+ * @brief Secure Receive
+ * 
+ * @param address: i2c_addr_t, I2C address of sender
+ * @param receive_buffer: uint8_t*, pointer to buffer to receive data to
+ * 
+ * @return int: number of bytes received, negative if error
+ * 
+ * Securely receive data over I2C. This function is utilized in POST_BOOT functionality.
+ * This function must be implemented by your team to align with the security requirements.
+*/
+int secure_receive(i2c_addr_t address, uint8_t *receive_buffer) {
+    return poll_and_receive_packet(address, buffer);
+}
+
+/**
  * @brief Secure Send and Receive
  *
  * @param address: i2c_addr_t, I2C address of sender
@@ -286,19 +316,6 @@ int scan_components() {
 
         // Create command message
         message* command = (message*)transmit_buffer;
-
-        uint8_t msg[AES_SIZE];
-        uint8_t ciphertext[AES_SIZE];
-        msg[0] = COMPONENT_CMD_SCAN;
-        //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
-
-        // put ciphertext in transmit_buffer memcpy
-        for (int i = 0; i < AES_SIZE; i++) {
-            transmit_buffer[i] = ciphertext[i];
-        }
-        // Send out command and receive resultGLOBAL_KEY, c
 
         command->opcode = COMPONENT_CMD_SCAN;
 

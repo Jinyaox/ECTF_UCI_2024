@@ -1,11 +1,11 @@
-#include "aes.h"
-#include "Code_warehouse/c/Rand_lib.h"
-#include "application_processor/inc/simple_crypto.h"
+#include "../application_processor/inc/Rand_lib.h"
+#include "../application_processor/inc/simple_crypto.h"
+#include "../application_processor/wolfssl/wolfcrypt/aes.h"
+#include "../application_processor/wolfssl/wolfcrypt/inttype.h"
 #include "stdio.h"
-#include "inttypes.h"
 
-
-/********************************* Global Variables **********************************/
+/********************************* Global Variables
+ * **********************************/
 
 // Random Number
 #define RAND_Z_SIZE 8
@@ -22,70 +22,77 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 #define ERROR_RETURN -1
 
 typedef enum {
-    COMPONENT_CMD_NONE,
-    COMPONENT_CMD_SCAN,
-    COMPONENT_CMD_VALIDATE,
-    COMPONENT_CMD_BOOT,
-    COMPONENT_CMD_ATTEST,
-    COMPONENT_CMD_SECURE_SEND_VALIDATE,
-    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+  COMPONENT_CMD_NONE,
+  COMPONENT_CMD_SCAN,
+  COMPONENT_CMD_VALIDATE,
+  COMPONENT_CMD_BOOT,
+  COMPONENT_CMD_ATTEST,
+  COMPONENT_CMD_SECURE_SEND_VALIDATE,
+  COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-/******************************** Testing Variables ********************************/
+/******************************** Testing Variables
+ * ********************************/
 
-uint32_t COMP_ID1 = 123456789
-uint32_t COMP_ID2 = 987654321
+uint32_t COMP_ID1 = 123456789;
+uint32_t COMP_ID2 = 987654321;
 
 uint8_t GLOBAL_KEY[AES_SIZE]; // Need to define this better
 
-/******************************** TYPE DEFINITIONS ********************************/
+/******************************** TYPE DEFINITIONS
+ * ********************************/
 
 // Datatype for all messages
 typedef struct {
-    uint8_t opcode;
-    uint8_t comp_ID[4];
-    uint8_t rand_z[RAND_Z_SIZE];
-    uint8_t rand_y[RAND_Z_SIZE];
-    uint8_t remain[MAX_I2C_MESSAGE_LEN   - 21];
+  uint8_t opcode;
+  uint8_t comp_ID[4];
+  uint8_t rand_z[RAND_Z_SIZE];
+  uint8_t rand_y[RAND_Z_SIZE];
+  uint8_t remain[MAX_I2C_MESSAGE_LEN - 21];
 } message;
 
-int test_validate_and_boot_protocol(){
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+int test_validate_and_boot_protocol() {
+  uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+  uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    message* command = (message*)transmit_buffer;
+  message *command = (message *)transmit_buffer;
 
-    command->opcode = COMPONENT_CMD_VALIDATE;
-    uint32_to_uint8(command->comp_ID, COMP_ID1);
+  command->opcode = COMPONENT_CMD_VALIDATE;
+  uint32_to_uint8(command->comp_ID, COMP_ID1);
 
-    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    *command->rand_z = *RAND_Z;
+  Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+  *command->rand_z = *RAND_Z;
 
-    printf("Data before encryption:\n\n
-        opcode = %c\n
-        Comp_ID = %"PRIu32"\n
-        Rand_Z = ", command->opcode, COMP_ID1);
-    for(int x = 0; x < RAND_Z_SIZE; x++){
-        printf("%c", RAND_Z[x]);
-    }
+  printf("Data before encryption:\n\n \
+        opcode = %c\n \
+        Comp_ID = %" PRIu32 "\n \
+        Rand_Z = ",
+         command->opcode, COMP_ID1);
 
-    uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
+  for (int x = 0; x < RAND_Z_SIZE; x++) {
+    printf("%c", RAND_Z[x]);
+  }
 
-    encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
-    
-    for(int x = 0; x < MAX_I2C_MESSAGE_LEN; x++){
-        printf("%c", ciphertext[x]);
-    }
-    
+  uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
 
+  encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
 
+  for (int x = 0; x < MAX_I2C_MESSAGE_LEN; x++) {
+    printf("%c", ciphertext[x]);
+  }
 
-    return SUCCESS_RETURN
-}
-int test_attest_protocol(){
-    return SUCCESS_RETURN
+  return SUCCESS_RETURN;
 }
 
-int test_post_boot_protocol(){
-    return SUCCESS_RETURN
+// int test_attest_protocol() { return SUCCESS_RETURN; }
+//
+// int test_post_boot_protocol() { return SUCCESS_RETURN; }
+
+int main() {
+
+  printf("validate and boot protocal : %d\n",
+         test_validate_and_boot_protocol());
+  // printf("attest protocal : %d\n", test_attest_protocal());
+  // printf("post boot protocal : %d\n", test_post_boot_protocal());
+  return 0;
 }

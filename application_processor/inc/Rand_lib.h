@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include "mxc_device.h"
 #include "nvic_table.h"
 #include "trng.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 /**
  * @brief   Get a random number
@@ -23,7 +23,8 @@ int RandomInt(void);
 void Rand_NASYC(uint8_t *buf, uint32_t len);
 
 /**
- * @brief   Get a random number of length len, do not block while generating data
+ * @brief   Get a random number of length len, do not block while generating
+ * data
  * @note    The user must call MXC_TRNG_Handler() in the ISR
  *
  * @param   data      Pointer to a location to store the number

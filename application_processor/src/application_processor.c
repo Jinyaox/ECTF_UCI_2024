@@ -109,6 +109,27 @@ int flash_simple_write(uint32_t address, uint32_t *buffer, uint32_t size);
 int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
                 uint8_t *ciphertext);
 
+/********************************* UTILITIES **********************************/
+//
+
+/*Tested converters*/
+void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
+    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+}
+
+void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
+    *str_uint32 = 0; // Initialize to zero
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+}
+
+/*Return 1 if the same and 0 if different*/
+int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
+    int counter = 0;
+    for(int i = 0; i < 4; i++)
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+    return counter == 4;
+}
+
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send 
@@ -258,28 +279,6 @@ int get_provisioned_ids(uint32_t *buffer) {
            flash_status.component_cnt * sizeof(uint32_t));
     return flash_status.component_cnt;
 }
-
-/********************************* UTILITIES **********************************/
-//
-
-/*Tested converters*/
-void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
-    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
-}
-
-void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
-    *str_uint32 = 0; // Initialize to zero
-    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
-}
-
-/*Return 1 if the same and 0 if different*/
-int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
-    int counter = 0;
-    for(int i = 0; i < 4; i++)
-        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
-    return counter == 4;
-}
-
 
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces

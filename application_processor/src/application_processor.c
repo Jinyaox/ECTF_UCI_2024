@@ -97,6 +97,7 @@ typedef enum {
     COMPONENT_CMD_ATTEST,
     COMPONENT_CMD_SECURE_SEND_VALIDATE,
     COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_POSTBOOT_VALIDATE,
 } component_cmd_t;
 
 // forward declaration
@@ -120,23 +121,125 @@ int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
  * This function must be implemented by your team to align with the security requirements.
 
 */
-int secure_send(uint8_t address, uint8_t *transmit_buffer, uint8_t len) {
-    return send_packet(address, len, buffer);
+int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    message* challenge = (message*)challenge_buffer;
+    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    *challenge->rand_z = *RAND_Z;
+
+    int len_chlg = secure_send(address, sizeof(uint8_t), challenge_buffer);
+    if (len_chlg == ERROR_RETURN) {
+        print_error("The AP failed to send the challenge buffer during post boot\n");
+        return ERROR_RETURN;
+    }
+    
+    int len_ans = secure_poll_and_receive_packet(address, answer_buffer, GLOBAL_KEY);
+    if (len_ans == ERROR_RETURN) {
+        print_error("The AP failed to receive the answer buffer during post boot\n");
+        return ERROR_RETURN;
+    }
+
+    message* response_ans = (message*)answer_buffer;
+    // compare cmd code
+    if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        print_error("Invalid command in answer message from component during post boot");
+        return ERROR_RETURN;
+    }
+
+    // compare Z value
+    if (response_ans->rand_z != RAND_Z) {
+        print_error("AP received expired answer message in post boot");
+        return ERROR_RETURN;
+    }
+
+    message* command = (message*)transmit_buffer;
+
+    *RAND_Y = *response_ans->rand_y;
+    *command->rand_z = *RAND_Z;
+    *command->rand_y = *RAND_Y;
+    for(int x = 0; x < len; x++){
+        command->remain[x] = buffer[x];
+    }
+
+    int len_msg = secure_send(address, sizeof(uint8_t), transmit_buffer);
+    if (len_msg == ERROR_RETURN) {
+        print_error("The AP failed to send the buffer message during post boot\n");
+        return ERROR_RETURN;
+    }
+
+    return len_msg;
 }
 
 /**
  * @brief Secure Receive
  * 
  * @param address: i2c_addr_t, I2C address of sender
- * @param receive_buffer: uint8_t*, pointer to buffer to receive data to
+ * @param buffer: uint8_t*, pointer to buffer to receive data to
  * 
  * @return int: number of bytes received, negative if error
  * 
  * Securely receive data over I2C. This function is utilized in POST_BOOT functionality.
  * This function must be implemented by your team to align with the security requirements.
 */
-int secure_receive(i2c_addr_t address, uint8_t *receive_buffer) {
-    return poll_and_receive_packet(address, buffer);
+int secure_receive(i2c_addr_t address, uint8_t *buffer) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    
+    int len_chlg = secure_poll_and_receive_packet(address, challenge_buffer, GLOBAL_KEY);
+    if (len_chlg == ERROR_RETURN) {
+        print_error("The AP failed to receive the challenge buffer during post boot\n");
+        return ERROR_RETURN;
+    }
+
+    message* challenge = (message*)challenge_buffer;
+    // compare cmd code
+    if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        print_error("Invalid command in challenge message from component during post boot");
+        return ERROR_RETURN;
+    }
+
+    message* answer = (message*)answer_buffer;
+
+    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    *RAND_Y = *challenge->rand_y;
+    answer->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    *answer->rand_z = *RAND_Z;
+    *answer->rand_y = *RAND_Y;
+
+    int len_ans = secure_send(address, sizeof(uint8_t), answer_buffer);
+    if (len_ans == ERROR_RETURN) {
+        print_error("The AP failed to send the answer message during post boot\n");
+        return ERROR_RETURN;
+    }
+
+    int len_msg = secure_poll_and_receive_packet(address, receive_buffer, GLOBAL_KEY);
+    if (len_msg == ERROR_RETURN) {
+        print_error("The AP failed to receive the message buffer during post boot\n");
+        return ERROR_RETURN;
+    }
+
+    message* command = (message*)receive_buffer;
+
+    // compare cmd code
+    if (command->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        print_error("Invalid opcode in command message from component during post boot");
+        return ERROR_RETURN;
+    }
+    // compare Z value
+    if (command->rand_z != RAND_Z) {
+        print_error("AP received expired command message in post boot");
+        return ERROR_RETURN;
+    }
+    for(int x = 0; x < MAX_I2C_MESSAGE_LEN-21; x++){
+        buffer[x] = command->remain[x];
+    }
+
+    return len_msg;
 }
 
 /**
@@ -171,6 +274,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
     // compare cmd code
     if (response_ans->opcode != COMPONENT_CMD_SECURE_SEND_VALIDATE) {
         print_error("Invalid command message from component");
+        return ERROR_RETURN;
     }
 
     // compare Z value
@@ -180,7 +284,7 @@ int secure_send_and_receive(i2c_addr_t address, uint8_t *transmit_buffer, uint8_
     }
 
     message* send_packet_trans = (message*)transmit_buffer;
-    *response_ans->rand_y = *RAND_Y;
+    *RAND_Y = *response_ans->rand_y;
     send_packet_trans->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
     *send_packet_trans->rand_z = *RAND_Z;
     *send_packet_trans->rand_y = *RAND_Y;

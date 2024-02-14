@@ -51,7 +51,7 @@ i2c_addr_t component_id_to_i2c_addr(uint32_t component_id);
  * Function sends an arbitrary packet over i2c to a specified component
 */
 int send_packet(i2c_addr_t address, uint8_t len, uint8_t* packet);
-int secure_send_packet(i2c_addr_t address, uint8_t len, uint8_t* buffer, uint8_t* GLOBAL_KEY);
+int secure_send_packet(i2c_addr_t address, uint8_t* buffer, uint8_t* GLOBAL_KEY);
 /**
  * @brief Poll a component and receive a packet
  * 

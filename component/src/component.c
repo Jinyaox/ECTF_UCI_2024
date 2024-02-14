@@ -151,29 +151,22 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
 
-    int len_chlg = secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
-    if (len_chlg == ERROR_RETURN) {
-        print_error("The component failed to send the challenge buffer during post boot\n");
-        return ERROR_RETURN;
-    }
+    secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
     
     int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
     if (len_ans == ERROR_RETURN) {
-        print_error("The component failed to receive the answer buffer during post boot\n");
         return ERROR_RETURN;
     }
 
     message* response_ans = (message*)answer_buffer;
     // compare cmd code
     if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
-        print_error("Invalid command in answer message from component during post boot");
         return ERROR_RETURN;
     }
 
     // compare Z value
     int y_check = random_checker(response_ans->rand_y, RAND_Y);
     if (y_check != 1) {
-        print_error("AP received expired answer message in post boot");
         return ERROR_RETURN;
     }
 
@@ -186,13 +179,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
         command->remain[x] = buffer[x];
     }
 
-    int len_msg = secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
-    if (len_msg == ERROR_RETURN) {
-        print_error("The component failed to send the buffer message during post boot\n");
-        return ERROR_RETURN;
-    }
-
-    return len_msg;
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
 /**
@@ -213,14 +200,12 @@ int secure_receive(uint8_t *buffer) {
     
     int len_chlg = secure_wait_and_receive_packet(challenge_buffer, GLOBAL_KEY);
     if (len_chlg == ERROR_RETURN) {
-        print_error("Component failed to receive the challenge buffer during post boot\n");
         return ERROR_RETURN;
     }
 
     message* challenge = (message*)challenge_buffer;
     // compare cmd code
     if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
-        print_error("Invalid command in challenge message from AP during post boot");
         return ERROR_RETURN;
     }
 
@@ -232,15 +217,10 @@ int secure_receive(uint8_t *buffer) {
     uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(answer->rand_y, RAND_Y);
 
-    int len_ans = secure_send_packet_and_ack(answer_buffer, GLOBAL_KEY);
-    if (len_ans == ERROR_RETURN) {
-        print_error("The component failed to send the answer message during post boot\n");
-        return ERROR_RETURN;
-    }
+    secure_send_packet_and_ack(answer_buffer, GLOBAL_KEY);;
 
     int len_msg = secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     if (len_msg == ERROR_RETURN) {
-        print_error("The component failed to receive the message buffer during post boot\n");
         return ERROR_RETURN;
     }
 
@@ -248,13 +228,11 @@ int secure_receive(uint8_t *buffer) {
 
     // compare cmd code
     if (command->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
-        print_error("Invalid opcode in command message from component during post boot");
         return ERROR_RETURN;
     }
     // compare Y value
     int y_check = random_checker(command->rand_y, RAND_Y);
     if (y_check != 1) {
-        print_error("component received expired command message in post boot");
         return ERROR_RETURN;
     }
     for(int x = 0; x < MAX_I2C_MESSAGE_LEN-21; x++){

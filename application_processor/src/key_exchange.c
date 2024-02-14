@@ -1,4 +1,4 @@
-extern flash_status;
+// extern flash_status;
 #include "Rand_lib.h"
 #include "board_link.h"
 #include "ectf_params.h" //to get to all the macros

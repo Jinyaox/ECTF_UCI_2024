@@ -369,7 +369,7 @@ cython_debug/
 msdk/
 
 ## Changed files everytime during build
-deployment/0x11111124.txt
-deployment/0x11111125.txt
-application_processor/inc/key.h
-component/inc/key.h
+# deployment/0x11111124.txt
+# deployment/0x11111125.txt
+# application_processor/inc/key.h
+# component/inc/key.h

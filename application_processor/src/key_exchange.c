@@ -39,7 +39,7 @@ char* key_exchange2(unsigned char *dest, char *random,
     XOR_secure(random, KEY_SHARE, 16, cache1);
     cache1[17] = '2';
     int result = send_packet(addr, 18, cache1);
-    int len = poll_and_receive_packet(addr, cache1);
+    int len = poll_and_receive_packet(addr, cache1); 
     if (len == 16) {
         XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
     } else {
@@ -57,6 +57,7 @@ char* key_exchange2(unsigned char *dest, char *random,
     if (len2 == 16) {
         XOR_secure(M2, cache2, 16, cache2); // k3 == cach2
         XOR_secure(cache1, cache2, 16, dest); // k1 * k3 == dest
+        XOR_secure(dest, KEY_SHARE, 16, dest); // k1 * k3 * k2 == dest
     } else {
         //print_info("receiving length ERROR 2 :( \n");
         return;

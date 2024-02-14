@@ -93,6 +93,15 @@ void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SI
     for (int i = 0; i < RAND_Z_SIZE; i++) target[i] = (control[i]);
 }
 
+bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+    for (int i = 0; i < RAND_Z_SIZE; i++){
+        if(target[i] != control[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
 int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
     int counter = 0;
     for(int i = 0; i < 4; i++)
@@ -135,7 +144,7 @@ int test_validate_and_boot_protocol(){
 
     int result = uint8_uint32_cmp(response->comp_ID, COMP_ID1);
     int wrong = uint8_uint32_cmp(response->comp_ID, COMP_ID2);
-    bool rand_z_check = (response->rand_z == RAND_Z);
+    int rand_z_check = random_checker(response->rand_z, RAND_Z);
 
     printf("\n\nData after decryption:\n\n \
     opcode = %02x\n \

@@ -63,36 +63,35 @@ int test_validate_and_boot_protocol() {
   Rand_NASYC(RAND_Z, RAND_Z_SIZE);
   *command->rand_z = *RAND_Z;
 
-  printf("Data before encryption:\n\n \
-        opcode = %c\n \
-        Comp_ID = %" PRIu32 "\n \
-        Rand_Z = ",
-         command->opcode, COMP_ID1);
+    printf("Data before encryption:\n\n
+        opcode = %c\n
+        Comp_ID = %"PRIu32"\n
+        Rand_Z = ", command->opcode, COMP_ID1);
+    for(int x = 0; x < RAND_Z_SIZE; x++){
+        printf("%c", RAND_Z[x]);
+    }
 
-  for (int x = 0; x < RAND_Z_SIZE; x++) {
-    printf("%c", RAND_Z[x]);
-  }
+    uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
 
-  uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
+    encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
+    
 
-  encrypt_sym(transmit_buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
+    printf("\n\nCiphertext: \n")
+    for(int x = 0; x < MAX_I2C_MESSAGE_LEN; x++){
+        printf("%c", ciphertext[x]);
+    }
+    
+    decrypt_sym(ciphertext, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, receive_buffer);
 
-  for (int x = 0; x < MAX_I2C_MESSAGE_LEN; x++) {
-    printf("%c", ciphertext[x]);
-  }
+    message* response = (message* )receive_buffer;
 
-  return SUCCESS_RETURN;
-}
+    printf("Data after decryption:\n\n
+        opcode = %c\n
+        Comp_ID = %"PRIu32"\n
+        Rand_Z = ", response->opcode, COMP_ID1);
+    for(int x = 0; x < RAND_Z_SIZE; x++){
+        printf("%c", response->RAND_Z[x]);
+    }
 
-// int test_attest_protocol() { return SUCCESS_RETURN; }
-//
-// int test_post_boot_protocol() { return SUCCESS_RETURN; }
-
-int main() {
-
-  printf("validate and boot protocal : %d\n",
-         test_validate_and_boot_protocol());
-  // printf("attest protocal : %d\n", test_attest_protocal());
-  // printf("post boot protocal : %d\n", test_post_boot_protocal());
-  return 0;
+    return SUCCESS_RETURN
 }

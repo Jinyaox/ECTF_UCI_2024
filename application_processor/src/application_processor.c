@@ -165,7 +165,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
 
-    int len_chlg = secure_send(address, challenge_buffer);
+    int len_chlg = secure_send_packet(address, challenge_buffer, GLOBAL_KEY);
     if (len_chlg == ERROR_RETURN) {
         print_error("The AP failed to send the challenge buffer during post boot\n");
         return ERROR_RETURN;
@@ -200,7 +200,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
         command->remain[x] = buffer[x];
     }
 
-    int len_msg = secure_send(address, transmit_buffer);
+    int len_msg = secure_send_packet(address, transmit_buffer, GLOBAL_KEY);
     if (len_msg == ERROR_RETURN) {
         print_error("The AP failed to send the buffer message during post boot\n");
         return ERROR_RETURN;
@@ -246,7 +246,7 @@ int secure_receive(i2c_addr_t address, uint8_t *buffer) {
     uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(answer->rand_y, RAND_Y);
 
-    int len_ans = secure_send(address, answer_buffer);
+    int len_ans = secure_send_packet(address, answer_buffer, GLOBAL_KEY);
     if (len_ans == ERROR_RETURN) {
         print_error("The AP failed to send the answer message during post boot\n");
         return ERROR_RETURN;

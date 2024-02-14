@@ -41,7 +41,7 @@ char* key_exchange2(unsigned char *dest, char *random,
     int result = send_packet(addr, 18, cache1);
     int len = poll_and_receive_packet(addr, cache1);
     if (len == 16) {
-        XOR_secure(M1, cache1, 16, cache1);
+        XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
     } else {
         //print_info("receiving length ERROR 1 :( \n");
         return;
@@ -55,8 +55,8 @@ char* key_exchange2(unsigned char *dest, char *random,
     int return_status = send_packet(addr2, 18, cache2);
     int len2 = poll_and_receive_packet(addr2, cache2);
     if (len2 == 16) {
-        XOR_secure(M2, cache1, 16, cache1);
-        XOR_secure(cache1, cache2, 16, dest);
+        XOR_secure(M2, cache2, 16, cache2); // k3 == cach2
+        XOR_secure(cache1, cache2, 16, dest); // k1 * k3 == dest
     } else {
         //print_info("receiving length ERROR 2 :( \n");
         return;
@@ -65,13 +65,13 @@ char* key_exchange2(unsigned char *dest, char *random,
     // send out the last few pieces of keys to both sides
     // sends k_Comp2 f1 R
     XOR_secure(F1, cache2, 16, cache2);
-    XOR_secure(cache2, random, 16, cache2);
+    XOR_secure(cache2, random, 16, cache2); // cach2 == k3 * f1 * r
     int result2 = send_packet(addr, 16, cache2);
 
     // sends k_Comp1 f2 R
-    XOR_secure(F1, cache2, 16, cache2);
-    XOR_secure(cache2, random, 16, cache2);
-    int result3 = send_packet(addr, 16, cache2);
+    XOR_secure(F2, cache1, 16, cache1);
+    XOR_secure(cache1, random, 16, cache1); // cach1 == k1 * f2 * r
+    int result3 = send_packet(addr2, 16, cache1);
 
     return;
 }

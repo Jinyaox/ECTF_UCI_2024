@@ -89,6 +89,10 @@ void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
     for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
 }
 
+void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+    for (int i = 0; i < RAND_Z_SIZE; i++) target[i] = (control[i]);
+}
+
 int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
     int counter = 0;
     for(int i = 0; i < 4; i++)
@@ -105,7 +109,7 @@ int test_validate_and_boot_protocol(){
     uint32_to_uint8(command->comp_ID, COMP_ID1);
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    *command->rand_z = *RAND_Z;
+    uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
 
     printf("Data before encryption:\n\n \
         opcode = %02x\n \
@@ -131,15 +135,18 @@ int test_validate_and_boot_protocol(){
 
     int result = uint8_uint32_cmp(response->comp_ID, COMP_ID1);
     int wrong = uint8_uint32_cmp(response->comp_ID, COMP_ID2);
+    bool rand_z_check = (response->rand_z == RAND_Z);
 
     printf("\n\nData after decryption:\n\n \
     opcode = %02x\n \
     Is the recieved id == COMP_ID1?  %d\n \
     Is the received id == COMP_ID2?  %d\n \
-    Rand_Z = ", response->opcode & 0xff, result, wrong);
+    Are both Z's equal to each other?  %d\n \
+    Rand_Z = ", response->opcode & 0xff, result, wrong, rand_z_check);
     for(int x = 0; x < RAND_Z_SIZE; x++){
         printf("%02x", response->rand_z[x] & 0xff);
     }
+    printf("\n DONE. \n\n");
 
     return SUCCESS_RETURN;
 }

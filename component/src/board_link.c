@@ -72,6 +72,7 @@ uint8_t wait_and_receive_packet(uint8_t* packet) {
     uint8_t len = I2C_REGS[RECEIVE_LEN][0];
     memcpy(packet, (void*)I2C_REGS[RECEIVE], len);
 
+    I2C_REGS[RECEIVE_DONE][0] = false;
     return len;
 }
 

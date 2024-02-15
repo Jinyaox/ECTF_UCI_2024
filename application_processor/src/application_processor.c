@@ -656,7 +656,7 @@ int main() {
     char buf[100];
     while (1) {
         memset(buf, 0, 100);
-        //recv_input("Enter Command: ", buf);
+        recv_input("Enter Command: ", buf);
 
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0

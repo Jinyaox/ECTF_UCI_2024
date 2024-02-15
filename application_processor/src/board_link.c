@@ -154,7 +154,7 @@ int secure_send_packet(i2c_addr_t address, uint8_t *buffer,
     // Encrypting message and storing it in ciphertext
     encrypt_sym(buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
     // uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
-    return send_packet(address, MAX_I2C_MESSAGE_LEN, ciphertext);
+    return send_packet(address, MAX_I2C_MESSAGE_LEN-1, ciphertext);
 }
 
 /**

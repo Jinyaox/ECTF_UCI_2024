@@ -1,7 +1,7 @@
 ## Project .gitignore ##
 
 .DS_Store
-.vscode/
+
 **/gcc
 
 !device/lib
@@ -367,3 +367,9 @@ cython_debug/
 
 !device/lib
 msdk/
+
+## Changed files everytime during build
+deployment/0x11111124.txt
+deployment/0x11111125.txt
+application_processor/inc/key.h
+component/inc/key.h

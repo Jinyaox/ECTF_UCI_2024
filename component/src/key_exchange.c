@@ -11,16 +11,16 @@ uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
 
 
 
-void sync2(char* dest, char* k2_m1){
+void sync2(char* dest, char* k2_r){
     char cash_k2_r[18];
-    XOR_secure(cash_k2_r,KEY_SHARE,16,cash_k2_r); //k2_r_k1
+    XOR_secure(k2_r,KEY_SHARE,16,cash_k2_r); //k2_r_k1
 
-    XOR_secure(KEY_SHARE, MASK, 16, k2_m1);
-    send_packet_and_ack(16, k2_m1); //send k m1
+    XOR_secure(KEY_SHARE, MASK, 16, k2_r); //k2_r is buffer name
+    send_packet_and_ack(16, k2_r); // send k m1
 
-    uint8_t len=wait_and_receive_packet(k2_m1);
+    uint8_t len = wait_and_receive_packet(k2_r);
     if(len==16){
-        XOR_secure(cash_k2_r, k2_m1, 16, dest);
+        XOR_secure(cash_k2_r, k2_r, 16, dest);
         XOR_secure(dest, FINAL_MASK, 16, dest);
         return;
     }else{

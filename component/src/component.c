@@ -53,9 +53,10 @@
 */
 //AES
 #define AES_SIZE 16// 16 bytes
-#define RAND_Z_SIZE 16
-#define RAND_Y_SIZE 16
+#define RAND_Z_SIZE 8
+#define RAND_Y_SIZE 8
 uint8_t RAND_Y[RAND_Y_SIZE];
+uint8_t RAND_Z[RAND_Z_SIZE];
 uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0;
 
@@ -69,6 +70,7 @@ typedef enum {
     COMPONENT_CMD_ATTEST,
     COMPONENT_CMD_SECURE_SEND_VALIDATE,
     COMPONENT_CMD_SECURE_SEND_CONFIMRED,
+    COMPONENT_CMD_POSTBOOT_VALIDATE,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS ********************************/
@@ -96,65 +98,8 @@ uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
-/******************************* POST BOOT FUNCTIONALITY *********************************/
-/**
- * @brief Secure Send
- *
- * @param buffer: uint8_t*, pointer to data to be send
- * @param len: uint8_t, size of data to be sent
- *
- * Securely send data over I2C. This function is utilized in POST_BOOT
- * functionality. This function must be implemented by your team to align with
- * the security requirements.
- */
-void secure_send(uint8_t *buffer, uint8_t len) {
-    send_packet_and_ack(len, buffer);
-}
 
-/**
- * @brief Secure Receive
- *
- * @param buffer: uint8_t*, pointer to buffer to receive data to
- *
- * @return int: number of bytes received, negative if error
- *
- * Securely receive data over I2C. This function is utilized in POST_BOOT
- * functionality. This function must be implemented by your team to align with
- * the security requirements.
- */
-int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
-
-
-// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
-void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
-    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
-    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-    message * command = (message *)receive_buffer;
-    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
-    uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
-    message * send_packet = (message *)validate_buffer;
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
-    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    memcpy(send_packet->rand_y, RAND_Y, RAND_Y_SIZE);
-    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, validate_buffer, GLOBAL_KEY);
-    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
-    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
-        printf("Component transmitting failed, the transmitting takes too long");
-        return;
-    }
-    command = (message*) receive_buffer;
-    if(command->rand_y != RAND_Y){
-        printf("Component has received expired message");
-    }
-    send_packet = (message *)transmit_buffer;
-    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
-    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
-}
-/******************************* FUNCTION DEFINITIONS *********************************/
-
-
-/*Tested converters*/
+/********************************* UTILITIES **********************************/
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
     for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
 }
@@ -171,6 +116,160 @@ int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
         if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
     return counter == 4;
 }
+
+void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+    for (int i = 0; i < RAND_Z_SIZE; i++) target[i] = (control[i]);
+}
+
+bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+    for (int i = 0; i < RAND_Z_SIZE; i++){
+        if(target[i] != control[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
+/******************************* POST BOOT FUNCTIONALITY *********************************/
+/**
+ * @brief Secure Send
+ *
+ * @param buffer: uint8_t*, pointer to data to be send
+ * @param len: uint8_t, size of data to be sent
+ *
+ * Securely send data over I2C. This function is utilized in POST_BOOT
+ * functionality. This function must be implemented by your team to align with
+ * the security requirements.
+ */
+void secure_send(uint8_t *buffer, uint8_t len) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    message* challenge = (message*)challenge_buffer;
+    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
+
+    secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
+    
+    int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+    if (len_ans == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+
+    message* response_ans = (message*)answer_buffer;
+    // compare cmd code
+    if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        return ERROR_RETURN;
+    }
+
+    // compare Z value
+    int y_check = random_checker(response_ans->rand_y, RAND_Y);
+    if (y_check != 1) {
+        return ERROR_RETURN;
+    }
+
+    message* command = (message*)transmit_buffer;
+
+    uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
+    uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
+    uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
+    for(int x = 0; x < len; x++){
+        command->remain[x] = buffer[x];
+    }
+
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
+}
+
+/**
+ * @brief Secure Receive
+ *
+ * @param buffer: uint8_t*, pointer to buffer to receive data to
+ *
+ * @return int: number of bytes received, negative if error
+ *
+ * Securely receive data over I2C. This function is utilized in POST_BOOT
+ * functionality. This function must be implemented by your team to align with
+ * the security requirements.
+ */
+int secure_receive(uint8_t *buffer) { 
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    
+    int len_chlg = secure_wait_and_receive_packet(challenge_buffer, GLOBAL_KEY);
+    if (len_chlg == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+
+    message* challenge = (message*)challenge_buffer;
+    // compare cmd code
+    if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        return ERROR_RETURN;
+    }
+
+    message* answer = (message*)answer_buffer;
+
+    Rand_ASYC(RAND_Y, RAND_Z_SIZE);
+    uint8Arr_to_uint8Arr(RAND_Z, challenge->rand_z);
+    answer->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);
+    uint8Arr_to_uint8Arr(answer->rand_y, RAND_Y);
+
+    secure_send_packet_and_ack(answer_buffer, GLOBAL_KEY);;
+
+    int len_msg = secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+    if (len_msg == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+
+    message* command = (message*)receive_buffer;
+
+    // compare cmd code
+    if (command->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        return ERROR_RETURN;
+    }
+    // compare Y value
+    int y_check = random_checker(command->rand_y, RAND_Y);
+    if (y_check != 1) {
+        return ERROR_RETURN;
+    }
+    for(int x = 0; x < MAX_I2C_MESSAGE_LEN-21; x++){
+        buffer[x] = command->remain[x];
+    }
+
+    return len_msg;
+}
+
+
+// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
+void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
+    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
+    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+    message * command = (message *)receive_buffer;
+    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
+    message * send_packet = (message *)validate_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
+    memcpy(send_packet->rand_y, RAND_Y, RAND_Y_SIZE);
+    secure_send_packet_and_ack(validate_buffer, GLOBAL_KEY);
+    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
+    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
+        printf("Component transmitting failed, the transmitting takes too long");
+        return;
+    }
+    command = (message*) receive_buffer;
+    if(command->rand_y != RAND_Y){
+        printf("Component has received expired message");
+    }
+    send_packet = (message *)transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
+}
+/******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
 // Your design does not need to change this
@@ -246,7 +345,7 @@ void process_boot() {
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
-    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
 void process_scan() {
@@ -258,7 +357,7 @@ void process_scan() {
     send_packet->opcode = COMPONENT_CMD_SCAN;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
-    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
 void process_attest() {
@@ -285,7 +384,7 @@ void process_attest() {
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
     memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
-    secure_send_packet_and_ack(MAX_I2C_MESSAGE_LEN, transmit_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
 

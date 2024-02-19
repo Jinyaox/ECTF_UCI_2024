@@ -72,6 +72,7 @@ uint8_t wait_and_receive_packet(uint8_t* packet) {
     uint8_t len = I2C_REGS[RECEIVE_LEN][0];
     memcpy(packet, (void*)I2C_REGS[RECEIVE], len);
 
+    I2C_REGS[RECEIVE_DONE][0] = false;
     return len;
 }
 
@@ -105,10 +106,10 @@ int timed_wait_and_receive_packet(uint8_t* packet) {
  * This function utilizes the simple_i2c_peripheral library to
  * send a packet to the AP and wait for the message to be received
 */
-void secure_send_packet_and_ack(uint8_t len, uint8_t* packet, uint8_t* GLOBAL_KEY) {
-    uint8_t ciphertext[len];
-    encrypt_sym(packet, len, GLOBAL_KEY, ciphertext);
-    send_packet_and_ack(len, ciphertext);
+void secure_send_packet_and_ack(uint8_t* packet, uint8_t* GLOBAL_KEY) {
+    uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
+    encrypt_sym(packet, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
+    send_packet_and_ack(MAX_I2C_MESSAGE_LEN, ciphertext);
 }
 
 

@@ -408,11 +408,11 @@ int main(void) {
     LED_On(LED2);
 
     while (1) {
-        // if(synthesized == 0){
+        if(synthesized == 0){
 
-        //     key_sync(GLOBAL_KEY);
-        //     synthesized = 1;
-        // }
+            key_sync(GLOBAL_KEY);
+            synthesized = 1;
+        }
         component_process_cmd();
     }
 }

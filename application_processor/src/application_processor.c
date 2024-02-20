@@ -376,7 +376,11 @@ int scan_components() {
         // Success, device is present
         if (len > 0) {
             message* scan = (message*)receive_buffer;
-            print_info("F>0x%08x\n", scan->comp_ID);
+            uint32_t comp_id = 0;
+            for(int i = 0; i < 4; i++) {
+                comp_id = (comp_id << 8) | scan->comp_ID[i];
+            }
+            print_info("F>0x%08x\n", comp_id);
         }
     }
     print_success("List\n");
@@ -660,6 +664,7 @@ int main() {
 
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
+
         if ((synthesized == 0) ) {
             key_sync(GLOBAL_KEY, flash_status.component_cnt,
                      flash_status.component_ids[0],

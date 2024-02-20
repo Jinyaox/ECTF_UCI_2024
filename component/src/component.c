@@ -57,7 +57,8 @@
 #define RAND_Y_SIZE 8
 uint8_t RAND_Y[RAND_Y_SIZE];
 uint8_t RAND_Z[RAND_Z_SIZE];
-uint8_t GLOBAL_KEY[AES_SIZE];
+uint8_t GLOBAL_KEY[AES_SIZE] = {0x3A, 0x52, 0xE1, 0xBD, 0x1E, 0x71, 0x32, 0xA5,0xAF, 0xF1, 0x1A, 0x1A, 0xC0, 0x47, 0x05, 0x99};
+
 uint8_t synthesized=0;
 
 /******************************** TYPE DEFINITIONS ********************************/
@@ -356,7 +357,10 @@ void process_scan() {
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SCAN;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
+    send_packet->comp_ID[0] = (COMPONENT_ID >> 24) & 0xFF;
+    send_packet->comp_ID[1] = (COMPONENT_ID >> 16) & 0xFF;
+    send_packet->comp_ID[2] = (COMPONENT_ID >> 8) & 0xFF;
+    send_packet->comp_ID[3] = COMPONENT_ID & 0xFF;
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
@@ -404,11 +408,11 @@ int main(void) {
     LED_On(LED2);
 
     while (1) {
-        if(synthesized == 0){
+        // if(synthesized == 0){
 
-            key_sync(GLOBAL_KEY);
-            synthesized = 1;
-        }
+        //     key_sync(GLOBAL_KEY);
+        //     synthesized = 1;
+        // }
         component_process_cmd();
     }
 }

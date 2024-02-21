@@ -344,14 +344,15 @@ void process_boot() {
     }
     //Validation passed
     //Starts Boot
-    boot();
+    
     //Send Boot comfirmation message back to AP
     memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
+    uint32_to_uint8(send_packet->comp_ID, COMPONENT_ID);
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
+    boot();
 }
 
 void process_scan() {
@@ -379,7 +380,7 @@ void process_attest() {
     }
 
     // Start to move atttestation data into the transmit_buffer
-    memset(string_buffer, 0, MAX_I2C_MESSAGE_LEN);
+    memset(string_buffer, 0, MAX_I2C_MESSAGE_LEN-21);
     uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     

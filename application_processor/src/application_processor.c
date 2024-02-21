@@ -114,29 +114,34 @@ int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
 
 /*Tested converters*/
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
-    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+    for (int i = 0; i < 4; i++)
+        str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF;
 }
+
 
 void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
     *str_uint32 = 0; // Initialize to zero
-    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)str_uint8[i] << 8 * (3 - i);
 }
 
 /*Return 1 if the same and 0 if different*/
 int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
     int counter = 0;
     for(int i = 0; i < 4; i++)
-        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF)
+            counter++;
     return counter == 4;
 }
 
 void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
-    for (int i = 0; i < RAND_Z_SIZE; i++) target[i] = (control[i]);
+    for (int i = 0; i < RAND_Z_SIZE; i++){
+        target[i] = control[i];
+    }
 }
 
 bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++){
-        if(target[i] != control[i]){
+        if (target[i] != control[i]){
             return false;
         }
     }

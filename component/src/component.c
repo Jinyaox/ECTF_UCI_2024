@@ -338,7 +338,7 @@ void process_boot() {
     //Validate the Component ID
     message* command = (message*) receive_buffer;
 
-    if(uint8_uint32_cmp(command->comp_ID,COMPONENT_ID)){
+    if(uint8_uint32_cmp(command->comp_ID,COMPONENT_ID) != 1){
         printf("The Component ID checks failed at the component sided");
         return;
     }
@@ -373,7 +373,7 @@ void process_attest() {
     //Validate the Component ID; plaintext[1:4]
     message* command = (message*) receive_buffer;
 
-    if(command->comp_ID != COMPONENT_ID){
+    if(uint8_uint32_cmp(command->comp_ID, COMPONENT_ID) != 1){
         printf("The Component ID checks failed at the component sided");
         return;
     }
@@ -389,7 +389,7 @@ void process_attest() {
     message* send_packet = (message*)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_ATTEST;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
-    uint32_to_uint8(COMPONENT_ID, send_packet->comp_ID);
+    uint32_to_uint8(send_packet->comp_ID, COMPONENT_ID);
     memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }

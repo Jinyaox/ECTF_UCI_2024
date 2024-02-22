@@ -335,6 +335,10 @@ void init() {
 // Send a command to a component and receive the result
 int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Send message
+    //These are reserved address for the Board, we should not use these
+    if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            return ERROR_RETURN;
+    }
     int result = secure_send_packet(addr, transmit,GLOBAL_KEY); 
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;

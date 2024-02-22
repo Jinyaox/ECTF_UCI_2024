@@ -92,7 +92,7 @@ int poll_and_receive_packet(i2c_addr_t address, uint8_t *packet) {
     //This should be used for real case, don't delete it
     // Comment it out while debuging because this communication window is too short 
     int time_fail = -1;
-    for(int i = 0; i < 3000000; i++){
+    for(int i = 0; i < 1000; i++){
         result = i2c_simple_read_transmit_done(address);
         if (result < SUCCESS_RETURN) {
             return ERROR_RETURN;

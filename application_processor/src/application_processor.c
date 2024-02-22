@@ -424,8 +424,9 @@ int validate_and_boot_components() {
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
-            print_error("Could not validate or boot component\n");
-            return ERROR_RETURN;
+            print_error("Could not validate or boot component:%d\n",i);
+            continue;
+           // return ERROR_RETURN;
         }
 
         message* response = (message* )receive_buffer;

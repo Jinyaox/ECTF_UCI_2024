@@ -661,6 +661,7 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     // Print the component IDs to be helpful
     // Your design does not need to do this

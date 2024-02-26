@@ -455,6 +455,17 @@ int validate_and_boot_components() {
 }
 
 int attest_component(uint32_t component_id) {
+    int check = -1;
+    for(int i = 0; i < flash_status.component_cnt; ++i){
+        if(uint8_uint32_cmp(flash_status.component_ids[i], component_id)){
+            check = 0;
+            break;
+        }
+    }
+    if(check == -1){
+        print_error("Could not attest\n");
+        return ERROR_RETURN;
+    }
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];

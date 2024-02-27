@@ -391,6 +391,9 @@ int scan_components() {
             }
             print_info("F>0x%08x\n", comp_id);
         }
+        else{
+            return ERROR_RETURN;
+        }
     }
     print_success("List\n");
     return SUCCESS_RETURN;
@@ -457,7 +460,7 @@ int validate_and_boot_components() {
 int attest_component(uint32_t component_id) {
     int check = -1;
     for(int i = 0; i < flash_status.component_cnt; ++i){
-        if(uint8_uint32_cmp(flash_status.component_ids[i], component_id)){
+        if(flash_status.component_ids[i] == component_id){
             check = 0;
             break;
         }

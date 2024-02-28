@@ -194,9 +194,9 @@ def read_key_from_files(file_paths: list) -> None:
             lines = fh.readlines()
             fh.close()
             #Read M
-            masks[index]=lines[2] 
+            masks[index]=lines[1] 
             #Read F
-            masks[index + 2]=lines[3]
+            masks[index + 2]=lines[2]
         else:
             masks[index]=change_byte_to_const("0000000000000000".encode(),f'M{index + 1}')
             masks[index + 2]=change_byte_to_const("0000000000000000".encode(),f'F{index + 1}')
@@ -250,7 +250,7 @@ def read_key_from_files(file_paths: list) -> None:
         fh.write(masks[2].replace("FINAL_MASK", "F1")+"\n")
     else:
         fh.write(masks[0].replace("MASK", "M1"))
-        fh.write(masks[2].replace("FINAL_MASK", "F1")+"\n")
+        fh.write(masks[2].replace("FINAL_MASK", "F1"))
         fh.write(masks[1].replace("MASK", "M2"))
         fh.write(masks[3].replace("FINAL_MASK", "F2")+"\n")
     fh.write("#endif\n")

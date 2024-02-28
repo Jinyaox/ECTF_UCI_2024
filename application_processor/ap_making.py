@@ -15,19 +15,19 @@ import re
 # ------------------------------ This is for key generation ------------------------------
 
 
-def create_shares(stream_length=16, num_shares=3):
+def create_k2(stream_length=16):
     """
-    The function returns 3 random byte streams and k1 k2 k3
+    The function returns 1 random byte streams and k1
     """
-    if num_shares == 2:
-        byte_stream1 = secrets.token_bytes(stream_length)
-        byte_stream2 = secrets.token_bytes(stream_length)
-        return [byte_stream1, byte_stream2]
-    else:
-        byte_stream1 = secrets.token_bytes(stream_length)
-        byte_stream2 = secrets.token_bytes(stream_length)
-        byte_stream3 = secrets.token_bytes(stream_length)
-        return [byte_stream1, byte_stream2, byte_stream3]
+    # if num_shares == 2:
+    #     byte_stream1 = secrets.token_bytes(stream_length)
+    #     byte_stream2 = secrets.token_bytes(stream_length)
+    #     return [byte_stream1, byte_stream2]
+    # else:
+    #     byte_stream1 = secrets.token_bytes(stream_length)
+    #     byte_stream2 = secrets.token_bytes(stream_length)
+    #     byte_stream3 = secrets.token_bytes(stream_length)
+    return secrets.token_bytes(stream_length)
 
 
 def gen_AES_key(shares: list):
@@ -147,59 +147,82 @@ def gen_masks(comp_cnt, len=16):
         M1 = secrets.token_bytes(len)
         M2 = secrets.token_bytes(len)
         return F1, F2, M1, M2
+    
+
+def file_exist(file_path)->bool:
+    if file_path.exists():
+        return True
+    else:
+        return False
 
 
-def write_key_to_files(file_paths: list) -> None:
+def read_key_from_files(file_paths: list) -> None:
     """
     Given some paths for component, writes the key shares repsectively to the file
     Also write everything back to the AP file, encrypted, of course
     """
     
-    shares=None
-    # key=None
+    # shares=None
+    # # key=None
+    # comp_val=0
+    # masks=None
+    # if len(file_paths)==1:
+    #     masks=gen_masks(1)
+    #     comp_val=1
+    #     shares=create_k2(16)
+    #     # key=gen_AES_key(shares)
+
+    #     # Write the keys into the Component file
+    #     f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
+    #     f.write("something".encode())
+    #     f.write(b'\n')
+    #     f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
+    #     f.write(change_byte_to_const(masks[0],"MASK").encode())
+    #     f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
+    #     f.close()
+
+    # else:
     comp_val=0
-    masks=None
-    if len(file_paths)==1:
-        masks=gen_masks(1)
-        comp_val=1
-        shares=create_shares(16,2)
-        # key=gen_AES_key(shares)
+    # shares=create_shares(16,3)
+    k2=create_k2(16)
+    # key=gen_AES_key(shares)
+    masks=['', '', '', '']
+    for index in range(len(macro_information["ids"])):
+        comp_val += 1
+        if file_exist(Path(f"../deployment/{macro_information['ids'][index]}.txt")):
+            fh = open(f"../deployment/{macro_information['ids'][index]}.txt", "r")
+            lines = fh.readlines()
+            fh.close()
+            #Read M
+            masks[index]=lines[2] 
+            #Read F
+            masks[index + 2]=lines[3]
+        else:
+            masks[index]=change_byte_to_const("0000000000000000".encode(),f'M{index + 1}')
+            masks[index + 2]=change_byte_to_const("0000000000000000".encode(),f'F{index + 1}')
 
-        # Write the keys into the Component file
-        f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
-        f.write("something".encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
-        f.write(change_byte_to_const(masks[0],"MASK").encode())
-        f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
-        f.close()
 
-    else:
-        comp_val=2
-        shares=create_shares(16,3)
-        key=gen_AES_key(shares)
-        masks=gen_masks(2)
 
-        # Write the keys into the Component file
-        f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
-        f.write("something".encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(masks[0],"MASK").encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
-        f.close()
+        # # Write the keys into the Component file
+        # f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
+        # f.write("something".encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(shares[1],"KEY_SHARE").encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(masks[0],"MASK").encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(masks[1],"FINAL_MASK").encode())
+        # f.close()
 
-        f = open(Path(f"../deployment/{macro_information['ids'][1]}.txt"), "wb")
-        f.write("something".encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(shares[2],"KEY_SHARE").encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(masks[2],"MASK").encode())
-        f.write(b'\n')
-        f.write(change_byte_to_const(masks[3],"FINAL_MASK").encode())
-        f.close()
+        # f = open(Path(f"../deployment/{macro_information['ids'][1]}.txt"), "wb")
+        # f.write("something".encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(shares[2],"KEY_SHARE").encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(masks[2],"MASK").encode())
+        # f.write(b'\n')
+        # f.write(change_byte_to_const(masks[3],"FINAL_MASK").encode())
+        # f.close()
 
     # Finally write the keys into the AP's parameter header
     # fh = open("inc/ectf_params.h", "w")
@@ -221,15 +244,15 @@ def write_key_to_files(file_paths: list) -> None:
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
-    fh.write(change_byte_to_const(shares[0],"KEY_SHARE")+"\n")
+    fh.write(change_byte_to_const(k2,"KEY_SHARE")+"\n")
     if comp_val==1:
-        fh.write(change_byte_to_const(masks[0],f"M1")+"\n")
-        fh.write(change_byte_to_const(masks[1],"F1")+"\n")
+        fh.write(masks[0].replace("MASK", "M1"))
+        fh.write(masks[2].replace("FINAL_MASK", "F1")+"\n")
     else:
-        fh.write(change_byte_to_const(masks[0],f"M1")+"\n")
-        fh.write(change_byte_to_const(masks[1],f"F1")+"\n")
-        fh.write(change_byte_to_const(masks[2],f"M2")+"\n")
-        fh.write(change_byte_to_const(masks[3],f"F2")+"\n")
+        fh.write(masks[0].replace("MASK", "M1"))
+        fh.write(masks[2].replace("FINAL_MASK", "F1")+"\n")
+        fh.write(masks[1].replace("MASK", "M2"))
+        fh.write(masks[3].replace("FINAL_MASK", "F2")+"\n")
     fh.write("#endif\n")
     fh.close()
 
@@ -239,4 +262,4 @@ def write_key_to_files(file_paths: list) -> None:
 if __name__ == "__main__":
     # this is for test running
     extract_info()
-    write_key_to_files(get_file_paths())
+    read_key_from_files(get_file_paths())

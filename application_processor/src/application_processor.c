@@ -366,7 +366,7 @@ int scan_components() {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    int len;
+    int check = 0;
 
     // Scan scan command to each component
     for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
@@ -392,9 +392,10 @@ int scan_components() {
                 comp_id = (comp_id << 8) | scan->comp_ID[i];
             }
             print_info("F>0x%08x\n", comp_id);
+            check = 1;
         }
     }
-    if(len > 0){
+    if(check > 0){
         print_success("List\n");
         return SUCCESS_RETURN;
     }
@@ -433,8 +434,8 @@ int validate_and_boot_components() {
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
             print_error("Could not validate or boot component:%d\n",i);
-            continue;
-           // return ERROR_RETURN;
+            // continue;
+           return ERROR_RETURN;
         }
 
         message* response = (message* )receive_buffer;

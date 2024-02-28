@@ -23,7 +23,7 @@ char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     int len = poll_and_receive_packet(addr, cache);
     
     XOR_secure(KEY_SHARE, cache, 16, cache);
-    XOR_secure(cache, F1, 16, cache); // Should be the dest for the fourth
+    XOR_secure(cache, F1, 16, dest); // Should be the dest for the fourth
                                 // argument?
     return;
 }

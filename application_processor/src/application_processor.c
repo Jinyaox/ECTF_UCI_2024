@@ -366,6 +366,8 @@ int scan_components() {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
+    int len;
+
     // Scan scan command to each component
     for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
         // I2C Blacklist:
@@ -391,12 +393,15 @@ int scan_components() {
             }
             print_info("F>0x%08x\n", comp_id);
         }
-        else{
-            return ERROR_RETURN;
-        }
     }
-    print_success("List\n");
-    return SUCCESS_RETURN;
+    if(len > 0){
+        print_success("List\n");
+        return SUCCESS_RETURN;
+    }
+    else{
+        print_error("List\n");
+        return ERROR_RETURN;
+    }
 }
 
 int validate_and_boot_components() {

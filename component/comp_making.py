@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import secrets
 
 
 # this is for deployment
@@ -103,10 +104,7 @@ def file_exist(file_path)->bool:
     else:
         return False
 
-def change_byte_to_const(byte_stream, name)->str:
-    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
-    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
-    return macro_string
+
     
 def Read_files()->None:
     if file_exist(Path(f"../deployment/{hex(int(macro_information['ids']))}.txt")):
@@ -121,6 +119,10 @@ def Read_files()->None:
         macro_information["mask"]=change_byte_to_const("0000000000000000".encode(),'MASK')
         macro_information["final"]=change_byte_to_const("0000000000000000".encode(),'FINAL_MASK')
 
+def change_byte_to_const(byte_stream, name)->str:
+    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
+    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
+    return macro_string
 
 def write_key_to_files()->None:
     """
@@ -128,27 +130,69 @@ def write_key_to_files()->None:
     Also write everything back to the AP file, encrypted, of course
     """
 
-    # Finally write the keys into the AP's parameter header
-    fh = open("inc/ectf_params.h", "w")
-    fh.write("#ifndef __ECTF_PARAMS__\n")
-    fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define COMPONENT_ID {macro_information['ids']}\n") 
-    fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
-    fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
-    fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
-    fh.write(f"#define ATTESTATION_CUSTOMER \"{macro_information['customer']}\"\n") 
-    fh.write("#endif\n")
+    # open the file in write mode in deployment
+    fh = open(Path(f"../deployment/{hex(int(macro_information['ids']))}.txt"), "wb")
+    key_share = secrets.token_bytes(16)
+    mask = secrets.token_bytes(16)
+    final = secrets.token_bytes(16)
+    fh.write("something".encode())
+    fh.write(b'\n')
+    # new line
+    fh.write(change_byte_to_const(mask,"MASK").encode())
+    fh.write(b'\n')
+    fh.write(change_byte_to_const(final,"FINAL_MASK").encode())
+    fh.write(b'\n')
     fh.close()
+
+
+    # # Finally write the keys into the AP's parameter header
+    # fh = open("inc/ectf_params.h", "w")
+    # fh.write("#ifndef __ECTF_PARAMS__\n")
+    # fh.write("#define __ECTF_PARAMS__\n")
+    # fh.write(f"#define COMPONENT_ID {macro_information['ids']}\n") 
+    # fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
+    # fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
+    # fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
+    # fh.write(f"#define ATTESTATION_CUSTOMER \"{macro_information['customer']}\"\n") 
+    # fh.write("#endif\n")
+    # fh.close()
 
     fh = open("inc/key.h", "w")
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
-    fh.write(macro_information["share"]+'\n')
-    fh.write(macro_information["mask"]+'\n')
-    fh.write(macro_information["final"]+'\n')    
+    fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
+    fh.write('\n')
+    fh.write(change_byte_to_const(mask,"MASK"))
+    fh.write('\n')
+    fh.write(change_byte_to_const(final,"FINAL_MASK"))   
+    fh.write('\n')
     fh.write("#endif\n")
     fh.close()
+
+
+
+def get_nums():
+    
+    f = open(Path(f"../deployment/comp_count.txt"), "r+")
+    # read the number of components
+    num = f.readline()
+    #f.close()
+    if num==None:
+        # if the file is empty write 0
+        f.write("1")
+        f.close()
+        return 1
+    else:
+        ret = int(num) + 1
+        f.write(str(ret))
+        f.close()
+        return ret
+    
+
+
+
+
 
 
 
@@ -156,5 +200,6 @@ def write_key_to_files()->None:
 
 if __name__ == "__main__":
     extract_info()
-    Read_files()
+    #Read_files()
+    
     write_key_to_files()

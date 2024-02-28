@@ -15,7 +15,7 @@ char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
     XOR_secure(M1, KEY_SHARE, 16, cache);
-    cache[17] = '2';
+    cache[17] = '1';
 
     int return_status = send_packet(addr, 18, cache);
     

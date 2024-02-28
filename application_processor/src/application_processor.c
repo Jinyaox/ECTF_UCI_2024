@@ -391,12 +391,15 @@ int scan_components() {
             }
             print_info("F>0x%08x\n", comp_id);
         }
-        else{
-            return ERROR_RETURN;
-        }
     }
-    print_success("List\n");
-    return SUCCESS_RETURN;
+    if(len > 0){
+        print_success("List\n");
+        return SUCCESS_RETURN;
+    }
+    else{
+        print_error("List\n");
+        return ERROR_RETURN;
+    }
 }
 
 int validate_and_boot_components() {

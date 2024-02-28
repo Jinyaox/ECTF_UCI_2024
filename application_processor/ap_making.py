@@ -116,7 +116,10 @@ def get_file_paths() -> list:
     """
     ids = macro_information["ids"]
     count = macro_information["cnt"]
-    return [ids[0] + ".txt", ids[1] + ".txt", count]
+    if count == "1":
+        return [ids[0] + ".txt", count]
+    else:
+        return [ids[0] + ".txt", ids[1] + ".txt", count]
 
     
 
@@ -160,7 +163,11 @@ def read_key_from_files(file_paths: list) -> None:
     fh.write(change_byte_to_const(k2,"KEY_SHARE")+"\n")
     if comp_val==1:
         fh.write(masks[0].replace("MASK", "M1"))
-        fh.write(masks[2].replace("FINAL_MASK", "F1")+"\n")
+        fh.write(masks[2].replace("FINAL_MASK", "F1"))
+        masks[1]=change_byte_to_const("0000000000000000".encode(),f'M{2}')
+        masks[3]=change_byte_to_const("0000000000000000".encode(),f'F{2}')
+        fh.write(masks[1].replace("MASK", "M2")+"\n")
+        fh.write(masks[3].replace("FINAL_MASK", "F2")+"\n")
     else:
         fh.write(masks[0].replace("MASK", "M1"))
         fh.write(masks[2].replace("FINAL_MASK", "F1"))

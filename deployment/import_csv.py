@@ -38,30 +38,15 @@ def get_nums():
         
         return 1
 
-    with open(file_path, "r+") as f:
-        num = f.readline()
-        if not num:
-            f.write("1")
-            return 1
-        else:
-            ret = int(num.strip()) + 1
-            f.seek(0)  # Move the cursor to the beginning of the file
-            f.write(str(ret))
-            return ret
-
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print("Usage: {} <filename> <rows> <columns>".format(sys.argv[0]))
-        sys.exit(1)
-    filename  = Path("../cc.csv")
+   
+    filename  = Path("cc.csv")
     rows = 100
-    for i in range(10):
-        print(get_nums())
-
     generate_csv(filename, rows)
     print("Generated CSV file: {}".format(filename))
     # Read the secret key from the CSV file 10 rows down
+    get_nums()
     for i in range(10):
-        print(get_secret_key_from_csv(filename, i))
+        get_secret_key_from_csv(filename, i)
     sys.exit(0)

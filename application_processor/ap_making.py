@@ -1,6 +1,6 @@
 from pathlib import Path
 import secrets
-import re
+import re, csv, os
 
 # This is for Ap, Maintain and Tested by Jinyao on Jan 25
 """
@@ -104,6 +104,7 @@ def extract_info():
     macro_information["ids"] = get_ids(lines[4])
     macro_information["cnt"] = get_cnt(lines[5])
     macro_information["message"] = get_boot_message(lines[6])
+
     return
 
 
@@ -176,10 +177,74 @@ def read_key_from_files(file_paths: list) -> None:
     fh.write("#endif\n")
     fh.close()
 
+def get_secret_key_from_csv(filename, row):
+    # Read the secret key from the CSV file
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        for i, line in enumerate(reader):
+            if i == row:
+                #print("Secret key: {}".format(line[0]))
+                return line[0]
+            
+def write_key_to_files():
+    """
+    Given some paths for component, writes the key shares repsectively to the file
+    Also write everything back to the AP file, encrypted, of course
+    """
+    indexs = []
+    file_path = Path("../comp_count.txt")
+    if not file_exist(file_path):
+        print("No file found")
+        print("error")
+        return
+    
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+            
+    for i in range(int(macro_information["cnt"])):
+        for j in range(len(lines)):
+            if macro_information["ids"][i] == lines[j].split()[0]:
+                indexs.append(lines[j].split()[1])
+                break
+    mask = []
+    final = []
+    if file_exist(Path(f"../deployment/cc.csv")):
+        for i in indexs:
+            mask.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), int(i)*2))
+            final.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), int(i)*2+1))
+    else:
+        print("No file found")
+        print("error")
+        return
+    k2 = secrets.token_bytes(16)
+    fh = open("./inc/key.h", "w")
+    fh.write("#ifndef __KEY__\n")
+    fh.write("#define __KEY__\n")
+    fh.write("#include <stdint.h> \n")
+    fh.write(change_byte_to_const(k2,"KEY_SHARE")+"\n")
+    if len(indexs) == 1:
+        fh.write(mask[0].replace("MASK", "M1") + "\n")
+        fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
+        fh.write(change_byte_to_const(secrets.token_bytes(16),"M2")+"\n")
+        fh.write(change_byte_to_const(secrets.token_bytes(16),"F2")+"\n")
+    else:
+        fh.write(mask[0].replace("MASK", "M1") + "\n")
+        fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
+        fh.write(mask[1].replace("MASK", "M2") + "\n")
+        fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
+    fh.write("#endif\n")
+    fh.close()
+    
+
+    
+    
+
 
 # ------------------------------ End of Previous Deinition, this is the main file -----------------------------------
 
 if __name__ == "__main__":
     # this is for test running
     extract_info()
-    read_key_from_files(get_file_paths())
+    #read_key_from_files(get_file_paths())
+    write_key_to_files()

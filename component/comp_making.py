@@ -1,6 +1,8 @@
 from pathlib import Path
 import re
 import secrets
+import os
+import csv
 
 
 # this is for deployment
@@ -124,38 +126,31 @@ def change_byte_to_const(byte_stream, name)->str:
     macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
     return macro_string
 
-def write_key_to_files()->None:
+def get_secret_key_from_csv(filename, row):
+    # Read the secret key from the CSV file
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        for i, line in enumerate(reader):
+            if i == row:
+                #print("Secret key: {}".format(line[0]))
+                return line[0]
+
+def write_key_to_files(index)->None:
     """
     Given some paths for component, writes the key shares repsectively to the file
     Also write everything back to the AP file, encrypted, of course
     """
-
-    # open the file in write mode in deployment
-    fh = open(Path(f"../deployment/{hex(int(macro_information['ids']))}.txt"), "wb")
     key_share = secrets.token_bytes(16)
-    mask = secrets.token_bytes(16)
-    final = secrets.token_bytes(16)
-    fh.write("something".encode())
-    fh.write(b'\n')
-    # new line
-    fh.write(change_byte_to_const(mask,"MASK").encode())
-    fh.write(b'\n')
-    fh.write(change_byte_to_const(final,"FINAL_MASK").encode())
-    fh.write(b'\n')
-    fh.close()
+    if file_exist(Path(f"../deployment/cc.csv")):
+        mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)
+        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2+1)
+    else:
+        print("No file found")
+        print("error")
+        return
 
 
-    # # Finally write the keys into the AP's parameter header
-    # fh = open("inc/ectf_params.h", "w")
-    # fh.write("#ifndef __ECTF_PARAMS__\n")
-    # fh.write("#define __ECTF_PARAMS__\n")
-    # fh.write(f"#define COMPONENT_ID {macro_information['ids']}\n") 
-    # fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
-    # fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
-    # fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
-    # fh.write(f"#define ATTESTATION_CUSTOMER \"{macro_information['customer']}\"\n") 
-    # fh.write("#endif\n")
-    # fh.close()
+
 
     fh = open("inc/key.h", "w")
     fh.write("#ifndef __KEY__\n")
@@ -163,9 +158,9 @@ def write_key_to_files()->None:
     fh.write("#include <stdint.h> \n")
     fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
     fh.write('\n')
-    fh.write(change_byte_to_const(mask,"MASK"))
+    fh.write(mask)
     fh.write('\n')
-    fh.write(change_byte_to_const(final,"FINAL_MASK"))   
+    fh.write(final)
     fh.write('\n')
     fh.write("#endif\n")
     fh.close()
@@ -173,21 +168,32 @@ def write_key_to_files()->None:
 
 
 def get_nums():
-    
-    f = open(Path(f"../deployment/comp_count.txt"), "r+")
-    # read the number of components
-    num = f.readline()
-    #f.close()
-    if num==None:
-        # if the file is empty write 0
-        f.write("1")
-        f.close()
+    file_path = Path("../comp_count.txt")
+    if not os.path.exists(file_path):
+        # If the file doesn't exist, create it and write "1"
+        with open(file_path, "w") as f:
+            # write nothing
+            #just create the file
+            pass
         return 1
-    else:
-        ret = int(num) + 1
-        f.write(str(ret))
-        f.close()
-        return ret
+
+    with open(file_path, "r+") as f:
+        lines = f.readlines()
+        num = -1
+        if len(lines)!=0:
+            num = int(lines[-1].split()[1])
+            print(num)
+        num+=1
+        ret = str(hex(int(macro_information['ids']))) + " " + str(num) + "\n"
+        print(ret)
+        f.write(ret)
+    return num
+
+        
+
+
+       
+
     
 
 
@@ -201,5 +207,5 @@ def get_nums():
 if __name__ == "__main__":
     extract_info()
     #Read_files()
-    
-    write_key_to_files()
+    index = get_nums()    
+    write_key_to_files(index)

@@ -136,14 +136,15 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
-    i2c_address = component_id & 0x7F
-    return i2c_address
+    component_id &= 0xFF
+    return component_id
 
 def write_key_to_files(index)->None:
     """
     Given some paths for component, writes the key shares repsectively to the file
     Also write everything back to the AP file, encrypted, of course
     """
+    index = int(index)
     key_share = secrets.token_bytes(16)
     if file_exist(Path(f"../deployment/cc.csv")):
         mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)

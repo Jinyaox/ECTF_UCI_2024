@@ -136,8 +136,8 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
-    COMPONENT_ADDR_MASK = 0x000000FF
-    return component_id & COMPONENT_ADDR_MASK
+    i2c_address = component_id & 0x7F
+    return i2c_address
 
 def write_key_to_files(index)->None:
     """

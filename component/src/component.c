@@ -411,14 +411,14 @@ int main(void) {
     i2c_addr_t addr = component_id_to_i2c_addr(COMPONENT_ID);
     board_link_init(addr);
     memset(GLOBAL_KEY, 0, AES_SIZE);
-    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     LED_On(LED2);
 
     while (1) {
         if(synthesized == 0){
 
-            key_sync(GLOBAL_KEY);
+            // key_sync(GLOBAL_KEY);
             synthesized = 1;
             send_packet_and_ack(16, MASK);
             //send_packet_and_ack(16, FINAL_MASK);

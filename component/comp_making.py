@@ -220,5 +220,5 @@ if __name__ == "__main__":
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
     #print(int(macro_information['ids']))
-    index = component_id_to_i2c_addr(int(macro_information['ids'], 16))   
+    index = component_id_to_i2c_addr(int(macro_information['ids']))   
     write_key_to_files(index)

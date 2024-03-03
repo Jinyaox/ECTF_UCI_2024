@@ -737,7 +737,8 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+    memset(GLOBAL_KEY, 0, AES_SIZE);
+    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     // Print the component IDs to be helpful
     // Your design does not need to do this
@@ -752,15 +753,12 @@ int main() {
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
 
-        if ((synthesized == 0) ) {
-            key_sync(GLOBAL_KEY, flash_status.component_cnt,
-                     flash_status.component_ids[0],
-                     flash_status.component_ids[1]);
-            synthesized = 1;
-        }
-        printf("ap's Global_key:  %x\n", GLOBAL_KEY[0]);
-        printf("ap's Global_key:  %x\n", GLOBAL_KEY[1]);
-        printf("ap's Global_key:  %x\n", GLOBAL_KEY[2]);
+        // if ((synthesized == 0) ) {
+        //     key_sync(GLOBAL_KEY, flash_status.component_cnt,
+        //              flash_status.component_ids[0],
+        //              flash_status.component_ids[1]);
+        //     synthesized = 1;
+        // }
 
         // Execute requested command
         if (!strcmp(buf, "list")) { // TODO: 3

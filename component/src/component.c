@@ -408,19 +408,17 @@ int main(void) {
     // Initialize Component
     i2c_addr_t addr = component_id_to_i2c_addr(COMPONENT_ID);
     board_link_init(addr);
-    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+    memset(GLOBAL_KEY, 0, AES_SIZE);
+    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     LED_On(LED2);
 
     while (1) {
         if(synthesized == 0){
 
-            key_sync(GLOBAL_KEY);
+            // key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
-        printf("component's Global_key:  %x\n", GLOBAL_KEY[0]);
-        printf("componenet's Global_key:  %x\n", GLOBAL_KEY[1]);
-        printf("componenet's Global_key:  %x\n", GLOBAL_KEY[2]);
         component_process_cmd();
     }
 }

@@ -8,6 +8,7 @@ __check_defined = \
 		$(error Undefined $1))
 
 all:
+	python import_csv.py
 	echo "#define SECRET 1234" > global_secrets.h
 
 clean:

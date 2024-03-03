@@ -44,9 +44,9 @@ if __name__ == '__main__':
     filename  = Path("cc.csv")
     rows = 100
     generate_csv(filename, rows)
-    print("Generated CSV file: {}".format(filename))
+    # print("Generated CSV file: {}".format(filename))
     # Read the secret key from the CSV file 10 rows down
     get_nums()
-    for i in range(10):
-        get_secret_key_from_csv(filename, i)
+    # for i in range(10):
+    #     get_secret_key_from_csv(filename, i)
     sys.exit(0)

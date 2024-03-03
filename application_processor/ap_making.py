@@ -185,6 +185,11 @@ def get_secret_key_from_csv(filename, row):
             if i == row:
                 #print("Secret key: {}".format(line[0]))
                 return line[0]
+
+
+def component_id_to_i2c_addr(component_id):
+    COMPONENT_ADDR_MASK = 0xFF  # 你需要设置适当的掩码值
+    return component_id & COMPONENT_ADDR_MASK
             
 def write_key_to_files():
     """
@@ -192,21 +197,10 @@ def write_key_to_files():
     Also write everything back to the AP file, encrypted, of course
     """
     indexs = []
-    file_path = Path("../comp_count.txt")
-    if not file_exist(file_path):
-        print("No file found")
-        print("error")
-        return
-    
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
 
             
     for i in range(int(macro_information["cnt"])):
-        for j in range(len(lines)):
-            if macro_information["ids"][i] == lines[j].split()[0]:
-                indexs.append(lines[j].split()[1])
-                break
+        indexs.append(component_id_to_i2c_addr(int(macro_information["ids"][i], 16)))
     mask = []
     final = []
     if file_exist(Path(f"../deployment/cc.csv")):

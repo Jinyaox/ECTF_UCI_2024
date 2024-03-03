@@ -134,6 +134,10 @@ def get_secret_key_from_csv(filename, row):
             if i == row:
                 #print("Secret key: {}".format(line[0]))
                 return line[0]
+            
+def component_id_to_i2c_addr(component_id):
+    COMPONENT_ADDR_MASK = 0xFF  # 你需要设置适当的掩码值
+    return component_id & COMPONENT_ADDR_MASK
 
 def write_key_to_files(index)->None:
     """
@@ -148,9 +152,6 @@ def write_key_to_files(index)->None:
         print("No file found")
         print("error")
         return
-
-
-
 
     fh = open("inc/key.h", "w")
     fh.write("#ifndef __KEY__\n")
@@ -182,10 +183,10 @@ def get_nums():
         num = -1
         if len(lines)!=0:
             num = int(lines[-1].split()[1])
-            # print(num)
+            #print(num)
         num+=1
         ret = str(hex(int(macro_information['ids']))) + " " + str(num) + "\n"
-        # print(ret)
+        #print(ret)
         f.write(ret)
     return num
 
@@ -206,6 +207,9 @@ def get_nums():
 
 if __name__ == "__main__":
     extract_info()
+    #print(macro_information)
+    #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
-    index = get_nums()    
+    #print(int(macro_information['ids']))
+    index = component_id_to_i2c_addr(int(macro_information['ids']))   
     write_key_to_files(index)

@@ -732,7 +732,8 @@ void attempt_attest() {
 }
 
 /*********************************** MAIN *************************************/
-
+uint8_t CP_KEY1[MAX_I2C_MESSAGE_LEN];
+uint8_t CP_KEY2[MAX_I2C_MESSAGE_LEN];
 int main() {
     // Initialize board
     init();
@@ -758,6 +759,12 @@ int main() {
                      flash_status.component_ids[0],
                      flash_status.component_ids[1]);
             synthesized = 1;
+
+
+            memset(CP_KEY1, 0, MAX_I2C_MESSAGE_LEN);
+            memset(CP_KEY2, 0, MAX_I2C_MESSAGE_LEN);
+            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
+            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
         }
 
         // Execute requested command

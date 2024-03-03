@@ -362,20 +362,20 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 int scan_components() {
     // Print out provisioned component IDs
     // print global key
-    print_info("G> ");
-    print_hex_info(GLOBAL_KEY, AES_SIZE);
-    // print m1 m2
-    print_info("M1> ");
-    print_hex_info(M1, AES_SIZE);
-    print_info("M2> ");
-    print_hex_info(M2, AES_SIZE);
+    // print_info("G> ");
+    // print_hex_info(GLOBAL_KEY, AES_SIZE);
+    // // print m1 m2
+    // print_info("M1> ");
+    // print_hex_info(M1, AES_SIZE);
+    // print_info("M2> ");
+    // print_hex_info(M2, AES_SIZE);
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
     }
-    print_info("Mask1> ");
-    print_hex_info(CP_KEY1, 16);
-    print_info("Mask2> ");
-    print_hex_info(CP_KEY2, 16);
+    // print_info("Mask1> ");
+    // print_hex_info(CP_KEY1, 16);
+    // print_info("Mask2> ");
+    // print_hex_info(CP_KEY2, 16);
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -775,10 +775,10 @@ int main() {
             synthesized = 1;
 
 
-            memset(CP_KEY1, 0, 17);
-            memset(CP_KEY2, 0, 17);
-            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
-            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
+            // memset(CP_KEY1, 0, 17);
+            // memset(CP_KEY2, 0, 17);
+            // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
+            // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
         }
 
         // Execute requested command

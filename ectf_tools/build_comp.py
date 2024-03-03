@@ -69,7 +69,8 @@ def build_component(
     except Exception as e:
         print(e)
         raise
-
+    
+    component_id = hex(component_id)
     logger.info("Creating parameters for build1")
     fh = open(design / Path("component/inc/ectf_params.h"), "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")

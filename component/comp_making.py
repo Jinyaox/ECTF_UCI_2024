@@ -225,5 +225,6 @@ if __name__ == "__main__":
     try:
         raise ValueError(str)
     except ValueError as e:
-        print(f"cccc: {e}") 
+        #print(f"cccc: {e}") 
+        pass
     write_key_to_files(index)

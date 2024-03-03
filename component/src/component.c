@@ -418,6 +418,9 @@ int main(void) {
             key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
+        print_debug("component's Global_key:  %x\n", GLOBAL_KEY[0]);
+        print_debug("componenet's Global_key:  %x\n", GLOBAL_KEY[1]);
+        print_debug("componenet's Global_key:  %x\n", GLOBAL_KEY[2]);
         component_process_cmd();
     }
 }

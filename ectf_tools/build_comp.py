@@ -81,7 +81,7 @@ def build_component(
     fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n") 
     fh.write("#endif\n")
     fh.close()
-    fh = open(Path("./inc/ectf_params.h"), "r")
+    fh = open(design / Path("component/inc/ectf_params.h"), "r")
     lines = fh.readlines()
     fh.close()
 

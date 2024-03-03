@@ -392,10 +392,15 @@ int scan_components() {
                 comp_id = (comp_id << 8) | scan->comp_ID[i];
             }
             print_info("F>0x%08x\n", comp_id);
-            check = 1;
+            for(int i = 0; i < flash_status.component_cnt; ++i){
+                if(flash_status.component_ids[i] == comp_id){
+                    check += 1;
+                    break;
+                }
+            }
         }
     }
-    if(check > 0){
+    if(check == flash_status.component_cnt){
         print_success("List\n");
         return SUCCESS_RETURN;
     }
@@ -405,10 +410,61 @@ int scan_components() {
     }
 }
 
+int preboot_validate_component_id(){
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    int check = 0;
+
+    // Scan scan command to each component
+    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
+        // I2C Blacklist:
+        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
+        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            continue;
+        }
+
+        // Create command message
+        message* command = (message*)transmit_buffer;
+
+        command->opcode = COMPONENT_CMD_SCAN;
+
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+
+        // Success, device is present
+        if (len > 0) {
+            message* scan = (message*)receive_buffer;
+            uint32_t comp_id = 0;
+            for(int i = 0; i < 4; i++) {
+                comp_id = (comp_id << 8) | scan->comp_ID[i];
+            }
+            for(int i = 0; i < flash_status.component_cnt; ++i){
+                if(flash_status.component_ids[i] == comp_id){
+                    check += 1;
+                    break;
+                }
+            }
+        }
+    }
+    if(check == flash_status.component_cnt){
+        return SUCCESS_RETURN;
+    }
+    else{
+        return ERROR_RETURN;
+    }
+}
+
 int validate_and_boot_components() {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // If the two provisioned ids are not matched with exisiting ids, abort booting
+    if(preboot_validate_component_id() == ERROR_RETURN){
+        print_error("Component id doesn't matched\n");
+        return ERROR_RETURN;
+    }
 
     // Send validate command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
@@ -433,7 +489,7 @@ int validate_and_boot_components() {
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
-            print_error("Could not validate or boot component:%d\n",i);
+            print_error("Could not validate or boot component:%d\n",i+1);
             // continue;
            return ERROR_RETURN;
         }

@@ -146,8 +146,8 @@ def write_key_to_files(index)->None:
     """
     key_share = secrets.token_bytes(16)
     if file_exist(Path(f"../deployment/cc.csv")):
-        mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 0)#index*2)
-        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 1)#index*2+1)
+        mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)
+        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2+1)
     else:
         print("No file found")
         print("error")
@@ -211,5 +211,5 @@ if __name__ == "__main__":
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
     #print(int(macro_information['ids']))
-    index = component_id_to_i2c_addr(int(macro_information['ids']))   
+    index = component_id_to_i2c_addr(int(macro_information['ids'], 16))   
     write_key_to_files(index)

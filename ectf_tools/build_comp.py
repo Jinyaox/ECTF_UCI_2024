@@ -16,8 +16,28 @@ import asyncio
 from pathlib import Path
 import os
 
+import re
+
+
 from ectf_tools.utils import run_shell, package_binary, i2c_address_is_blacklisted
 
+macro_information={}
+
+# End of Global Data Definition: 
+
+def get_id(macro):
+    pattern = r'#define COMPONENT_ID (\d+)'
+    match = re.search(pattern, macro)
+    if match:
+        # Extract the number from the matched group
+        number = match.group(1)
+        return number
+    else:
+        print("Number not found in the string.")
+
+def component_id_to_i2c_addr(component_id):
+    component_id &= 0xFF
+    return component_id
 
 def build_component(
     design: Path,
@@ -61,6 +81,13 @@ def build_component(
     fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n") 
     fh.write("#endif\n")
     fh.close()
+    fh = open(Path("./inc/ectf_params.h"), "r")
+    lines = fh.readlines()
+    fh.close()
+
+    idid = get_id(lines[2])
+    logger.info(f"Component ID: {idid}")
+    logger.info(f"Component I2C Address: {component_id_to_i2c_addr(int(idid))}")
 
     output_dir = os.path.abspath(output_dir)
     output_elf = f"{output_dir}/{output_name}.elf"

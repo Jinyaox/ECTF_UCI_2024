@@ -422,7 +422,7 @@ int main(void) {
             key_sync(GLOBAL_KEY);
             synthesized = 1;
             send_packet_and_ack(16, MASK);
-            send_packet_and_ack(16, FINAL_MASK);
+            //send_packet_and_ack(16, FINAL_MASK);
         }
         component_process_cmd();
     }

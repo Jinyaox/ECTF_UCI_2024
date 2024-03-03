@@ -39,6 +39,8 @@
 
 extern const uint8_t M1[16];
 extern const uint8_t F1[16];
+extern const uint8_t M2[16];
+extern const uint8_t F2[16];
 /********************************* Global Variables **********************************/
 
 // Flash Macros
@@ -363,9 +365,16 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 // We're assuming this doesn't need protection/modification
 int scan_components() {
     // Print out provisioned component IDs
+    // print global key
+    print_info("G> %16x\n", GLOBAL_KEY);
+    // print m1 m2
+    print_info("M1> %16x\n", M1);
+    print_info("M2> %16x\n", F1);
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        print_info("P>0x%08x----%x%x %x%x\n", flash_status.component_ids[i], M1[0], F1[0], CP_KEY1[0], CP_KEY2[0]);
+        print_info("P>0x%08x\n", flash_status.component_ids[i]);
     }
+    print_info("Mask1> %16x\n", CP_KEY1);
+    print_info("Mask2> %16x\n", CP_KEY2);
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -768,7 +777,7 @@ int main() {
             memset(CP_KEY1, 0, MAX_I2C_MESSAGE_LEN);
             memset(CP_KEY2, 0, MAX_I2C_MESSAGE_LEN);
             poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
-            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY2);
+            poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
         }
 
         // Execute requested command

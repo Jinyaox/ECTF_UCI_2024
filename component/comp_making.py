@@ -136,7 +136,7 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
-    COMPONENT_ADDR_MASK = 0xFF  # 你需要设置适当的掩码值
+    COMPONENT_ADDR_MASK = 0x000000FF
     return component_id & COMPONENT_ADDR_MASK
 
 def write_key_to_files(index)->None:
@@ -147,7 +147,7 @@ def write_key_to_files(index)->None:
     key_share = secrets.token_bytes(16)
     if file_exist(Path(f"../deployment/cc.csv")):
         mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)
-        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 1)#index*2+1)
+        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2+1)
     else:
         print("No file found")
         print("error")

@@ -224,9 +224,9 @@ if __name__ == "__main__":
     fh = open(Path("./inc/ectf_params.h"), "r")
     lines = fh.readlines()
     fh.close()
-    index = component_id_to_i2c_addr(int(macro_information['ids'],0))
+    #index = component_id_to_i2c_addr(int(macro_information['ids'],0))
     # using exception to print out the error message
-    str = str(lines) + " "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
+    str = str(lines)  #" "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
     sys.stderr.write(str)
     raise Exception("This is the error message")
     write_key_to_files(index)

@@ -34,7 +34,7 @@ macro_information={}
 # End of Global Data Definition: 
 
 def get_id(macro):
-    pattern = r'#define COMPONENT_ID (\d+)'
+    pattern = r'#define COMPONENT_ID (0x[\da-fA-F]+)'
     match = re.search(pattern, macro)
     if match:
         # Extract the number from the matched group
@@ -138,6 +138,7 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
+    component_id = int(component_id, 16)
     component_id &= 0xFF
     return component_id
 
@@ -217,16 +218,12 @@ def get_nums():
 # ------------------------------ End of Previous Deinition, this is the main file -----------------------------------
 
 if __name__ == "__main__":
-    #extract_info()
+    extract_info()
     #print(macro_information)
-    #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
-    fh = open(Path("./inc/ectf_params.h"), "r")
-    lines = fh.readlines()
-    fh.close()
-    #index = component_id_to_i2c_addr(int(macro_information['ids'],0))
+
+    index = component_id_to_i2c_addr(macro_information['ids'])
+    #print(index)
     # using exception to print out the error message
-    str = str(lines)  #" "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
-    sys.stderr.write(str)
-    raise Exception("This is the error message")
+    #sys.stderr.write(str)
     write_key_to_files(index)

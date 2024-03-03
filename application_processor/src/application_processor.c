@@ -523,6 +523,9 @@ int validate_and_boot_components() {
                         flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
+        else{
+            print_info("0x%08x>%s\n", flash_status.component_ids[i], response->remain);
+        }
 
         // compare Z value
         int z_check = random_checker(response->rand_z, RAND_Z);
@@ -683,7 +686,7 @@ void attempt_boot() {
         print_error("Failed to validate and/or boot components\n");
         return;
     }
-    print_debug("All Components validated\n");
+    // print_info("All Components validated\n");
 
     // Print boot message
     // This always needs to be printed when booting

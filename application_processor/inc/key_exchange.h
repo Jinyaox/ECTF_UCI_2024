@@ -1,6 +1,11 @@
 #ifndef KEY_EXCHANGE
 #define KEY_EXCHANGE
-
+#include "Rand_lib.h"
+#include "board_link.h"
+#include "ectf_params.h" //to get to all the macros
+#include "simple_i2c_controller.h"
+#include "xor_secure.h"
+#include "key.h"
 // include random generator from Zack's API
 
 // premise the simple write and receive is sufficient to send a 16 byte stream

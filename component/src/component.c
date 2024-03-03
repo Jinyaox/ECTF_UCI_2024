@@ -24,8 +24,7 @@
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 
-extern const uint8_t MASK[16];
-extern const uint8_t FINAL_MASK[16];
+
 
 // Includes from containerized build
 #include "ectf_params.h"
@@ -422,7 +421,7 @@ int main(void) {
             key_sync(GLOBAL_KEY);
             synthesized = 1;
             send_packet_and_ack(16, MASK);
-            send_packet_and_ack(16, FINAL_MASK);
+            //send_packet_and_ack(16, FINAL_MASK);
         }
         component_process_cmd();
     }

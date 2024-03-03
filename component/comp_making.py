@@ -136,14 +136,15 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
-    COMPONENT_ADDR_MASK = 0xFF  # 你需要设置适当的掩码值
-    return component_id & COMPONENT_ADDR_MASK
+    component_id &= 0xFF
+    return component_id
 
 def write_key_to_files(index)->None:
     """
     Given some paths for component, writes the key shares repsectively to the file
     Also write everything back to the AP file, encrypted, of course
     """
+    index = int(index)
     key_share = secrets.token_bytes(16)
     if file_exist(Path(f"../deployment/cc.csv")):
         mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)
@@ -157,14 +158,22 @@ def write_key_to_files(index)->None:
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
+    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern const uint8_t MASK[16];\n")
+    fh.write("extern const uint8_t FINAL_MASK[16];\n")
+    fh.write("#endif\n")
+    fh.close()
+    fh = open("src/key.c", "w")
+    fh.write("#include \"key.h\" \n")
     fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
     fh.write('\n')
     fh.write(mask)
     fh.write('\n')
     fh.write(final)
     fh.write('\n')
-    fh.write("#endif\n")
     fh.close()
+
+
 
 
 

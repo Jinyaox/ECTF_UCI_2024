@@ -188,7 +188,7 @@ def get_secret_key_from_csv(filename, row):
 
 
 def component_id_to_i2c_addr(component_id):
-    COMPONENT_ADDR_MASK = 0xFF  # 你需要设置适当的掩码值
+    COMPONENT_ADDR_MASK = 0x000000FF
     return component_id & COMPONENT_ADDR_MASK
             
 def write_key_to_files():
@@ -216,6 +216,15 @@ def write_key_to_files():
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
+    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern const uint8_t M1[16];\n")
+    fh.write("extern const uint8_t F1[16];\n")
+    fh.write("extern const uint8_t M2[16];\n")
+    fh.write("extern const uint8_t F2[16];\n")
+    fh.write("#endif\n")
+    fh.close()
+    fh = open("./src/key.c", "w")
+    fh.write("#include \"key.h\" \n")
     fh.write(change_byte_to_const(k2,"KEY_SHARE")+"\n")
     if len(indexs) == 1:
         fh.write(mask[0].replace("MASK", "M1") + "\n")
@@ -227,7 +236,6 @@ def write_key_to_files():
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
         fh.write(mask[1].replace("MASK", "M2") + "\n")
         fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
-    fh.write("#endif\n")
     fh.close()
     
 

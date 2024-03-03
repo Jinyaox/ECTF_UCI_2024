@@ -157,14 +157,22 @@ def write_key_to_files(index)->None:
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
+    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern const uint8_t MASK[16];\n")
+    fh.write("extern const uint8_t FINAL_MASK[16];\n")
+    fh.write("#endif\n")
+    fh.close()
+    fh = open("src/key.c", "w")
+    fh.write("#include \"key.h\" \n")
     fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
     fh.write('\n')
     fh.write(mask)
     fh.write('\n')
     fh.write(final)
     fh.write('\n')
-    fh.write("#endif\n")
     fh.close()
+
+
 
 
 

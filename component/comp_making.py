@@ -217,13 +217,16 @@ def get_nums():
 # ------------------------------ End of Previous Deinition, this is the main file -----------------------------------
 
 if __name__ == "__main__":
-    extract_info()
+    #extract_info()
     #print(macro_information)
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
+    fh = open(Path("./inc/ectf_params.h"), "r")
+    lines = fh.readlines()
+    fh.close()
     index = component_id_to_i2c_addr(int(macro_information['ids'],0))
     # using exception to print out the error message
-    str = str(macro_information) + " "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
+    str = str(lines) + " "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
     sys.stderr.write(str)
     raise Exception("This is the error message")
     write_key_to_files(index)

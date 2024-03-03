@@ -218,6 +218,7 @@ def get_nums():
 
 if __name__ == "__main__":
     extract_info()
+    #print(macro_information)
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
     index = component_id_to_i2c_addr(int(macro_information['ids'],0))

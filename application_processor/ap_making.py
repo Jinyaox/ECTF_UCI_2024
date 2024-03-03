@@ -1,6 +1,6 @@
 from pathlib import Path
 import secrets
-import re, csv, os
+import re, csv, os, sys
 
 # This is for Ap, Maintain and Tested by Jinyao on Jan 25
 """
@@ -248,5 +248,7 @@ def write_key_to_files():
 if __name__ == "__main__":
     # this is for test running
     extract_info()
+    # str = str(macro_information) + " "+ str(component_id_to_i2c_addr(int(macro_information["ids"][0], 16))) + " " + str(component_id_to_i2c_addr(int(macro_information["ids"][1], 16)))
+    # sys.stderr.write(str)
     #read_key_from_files(get_file_paths())
     write_key_to_files()

@@ -353,6 +353,7 @@ void process_boot() {
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(send_packet->comp_ID, COMPONENT_ID);
+    memcpy(send_packet->remain, COMPONENT_BOOT_MSG, sizeof(COMPONENT_BOOT_MSG));
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
     boot();
 }
@@ -420,7 +421,7 @@ int main(void) {
 
             // key_sync(GLOBAL_KEY);
             synthesized = 1;
-            send_packet_and_ack(16, MASK);
+            // send_packet_and_ack(16, MASK);
             //send_packet_and_ack(16, FINAL_MASK);
         }
         component_process_cmd();

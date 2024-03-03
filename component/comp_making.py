@@ -3,6 +3,8 @@ import re
 import secrets
 import os
 import csv
+import sys
+
 
 
 # this is for deployment
@@ -32,7 +34,7 @@ macro_information={}
 # End of Global Data Definition: 
 
 def get_id(macro):
-    pattern = r'#define COMPONENT_ID (\d+)'
+    pattern = r'#define COMPONENT_ID (0x[\da-fA-F]+)'
     match = re.search(pattern, macro)
     if match:
         # Extract the number from the matched group
@@ -136,6 +138,7 @@ def get_secret_key_from_csv(filename, row):
                 return line[0]
             
 def component_id_to_i2c_addr(component_id):
+    component_id = int(component_id, 16)
     component_id &= 0xFF
     return component_id
 
@@ -217,8 +220,10 @@ def get_nums():
 if __name__ == "__main__":
     extract_info()
     #print(macro_information)
-    #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
-    #print(int(macro_information['ids']))
-    index = component_id_to_i2c_addr(int(macro_information['ids']))   
+
+    index = component_id_to_i2c_addr(macro_information['ids'])
+    #print(index)
+    # using exception to print out the error message
+    #sys.stderr.write(str)
     write_key_to_files(index)

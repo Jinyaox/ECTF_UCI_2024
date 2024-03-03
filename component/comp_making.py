@@ -3,6 +3,8 @@ import re
 import secrets
 import os
 import csv
+from loguru import logger
+
 
 
 # this is for deployment
@@ -216,9 +218,10 @@ def get_nums():
 
 if __name__ == "__main__":
     extract_info()
-    #print(macro_information)
+    logger.info("Debugging the main file")
+    logger.info(f"Component ID: {macro_information['ids']}")
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
-    #print(int(macro_information['ids']))
     index = component_id_to_i2c_addr(int(macro_information['ids']))
+    logger.info(f"Component InDex: {index}")
     write_key_to_files(index)

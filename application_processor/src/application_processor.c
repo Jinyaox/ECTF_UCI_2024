@@ -359,7 +359,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 int scan_components() {
     // Print out provisioned component IDs
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        print_info("P>0x%08x\n", flash_status.component_ids[i]);
+        print_info("P>0x%08x----%x%x%x\n", flash_status.component_ids[i], GLOBAL_KEY[0], GLOBAL_KEY[1], GLOBAL_KEY[2]);
     }
 
     // Buffers for board link communication
@@ -753,12 +753,12 @@ int main() {
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
 
-        // if ((synthesized == 0) ) {
-        //     key_sync(GLOBAL_KEY, flash_status.component_cnt,
-        //              flash_status.component_ids[0],
-        //              flash_status.component_ids[1]);
-        //     synthesized = 1;
-        // }
+        if ((synthesized == 0) ) {
+            key_sync(GLOBAL_KEY, flash_status.component_cnt,
+                     flash_status.component_ids[0],
+                     flash_status.component_ids[1]);
+            synthesized = 1;
+        }
 
         // Execute requested command
         if (!strcmp(buf, "list")) { // TODO: 3

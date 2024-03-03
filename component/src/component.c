@@ -420,8 +420,10 @@ int main(void) {
 
             key_sync(GLOBAL_KEY);
             synthesized = 1;
-            MASK[0] = 73;
-            send_packet_and_ack(16, MASK);
+            uint8_t trans[AES_SIZE];
+            memcpy(trans,MASK,16);
+            trans[0] = 73;
+            send_packet_and_ack(16, trans);
             //send_packet_and_ack(16, FINAL_MASK);
         }
         component_process_cmd();

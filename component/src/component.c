@@ -410,7 +410,7 @@ int main(void) {
     // Initialize Component
     i2c_addr_t addr = component_id_to_i2c_addr(COMPONENT_ID);
     board_link_init(addr);
-    memset(GLOBAL_KEY1, 0, AES_SIZE);
+    memset(GLOBAL_KEY, 0, AES_SIZE);
     Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     LED_On(LED2);

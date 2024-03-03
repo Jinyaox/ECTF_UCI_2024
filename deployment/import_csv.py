@@ -42,7 +42,7 @@ def get_nums():
 if __name__ == '__main__':
    
     filename  = Path("cc.csv")
-    rows = 200
+    rows = 400
     generate_csv(filename, rows)
     # print("Generated CSV file: {}".format(filename))
     # Read the secret key from the CSV file 10 rows down

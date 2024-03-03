@@ -70,7 +70,7 @@ def build_component(
         print(e)
         raise
 
-    logger.info("Creating parameters for build")
+    logger.info("Creating parameters for build1")
     fh = open(design / Path("component/inc/ectf_params.h"), "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")

@@ -222,6 +222,6 @@ if __name__ == "__main__":
     logger.info(f"Component ID: {macro_information['ids']}")
     #print(component_id_to_i2c_addr(int(macro_information['ids'])))
     #Read_files()
-    index = component_id_to_i2c_addr(int(macro_information['ids']))
+    index = component_id_to_i2c_addr(int(macro_information['ids'],0))
     logger.info(f"Component InDex: {index}")
     write_key_to_files(index)

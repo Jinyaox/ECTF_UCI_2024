@@ -407,12 +407,7 @@ int scan_components() {
                 comp_id = (comp_id << 8) | scan->comp_ID[i];
             }
             print_info("F>0x%08x\n", comp_id);
-            for(int i = 0; i < flash_status.component_cnt; ++i){
-                if(flash_status.component_ids[i] == comp_id){
-                    check += 1;
-                    break;
-                }
-            }
+            check += 1;
         }
     }
     if(check == flash_status.component_cnt){

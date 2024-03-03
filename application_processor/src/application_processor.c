@@ -37,6 +37,8 @@
 
 #include "simple_flash.h"
 
+extern const uint8_t M1[16];
+extern const uint8_t M2[16];
 /********************************* Global Variables **********************************/
 
 // Flash Macros
@@ -362,7 +364,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 int scan_components() {
     // Print out provisioned component IDs
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        print_info("P>0x%08x----%x%x%x %x%x%x %x%x%x\n", flash_status.component_ids[i], GLOBAL_KEY[0], GLOBAL_KEY[1], GLOBAL_KEY[2], CP_KEY1[0], CP_KEY1[1], CP_KEY1[2], CP_KEY2[0], CP_KEY2[1], CP_KEY2[2]);
+        print_info("P>0x%08x----%x%x %x%x\n", flash_status.component_ids[i], M1[0], M2[0], CP_KEY1[0], CP_KEY2[0]);
     }
 
     // Buffers for board link communication

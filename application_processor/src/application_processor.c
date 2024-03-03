@@ -363,6 +363,8 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 // We're assuming this doesn't need protection/modification
 int scan_components() {
     // Print out provisioned component IDs
+    flash_status[0] = flash_status[2];
+    flash_status[1] = flash_status[3];
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x----%x%x %x%x\n", flash_status.component_ids[i], M1[0], F1[0], CP_KEY1[0], CP_KEY2[0]);
     }

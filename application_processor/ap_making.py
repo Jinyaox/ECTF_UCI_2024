@@ -205,7 +205,7 @@ def write_key_to_files():
     final = []
     if file_exist(Path(f"../deployment/cc.csv")):
         for i in indexs:
-            mask.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 0))#int(i)*2))
+            mask.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), int(i)*2))
             final.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 1))#int(i)*2+1))
     else:
         print("No file found")

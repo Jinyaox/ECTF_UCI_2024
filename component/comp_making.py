@@ -3,6 +3,7 @@ import re
 import secrets
 import os
 import csv
+import sys
 
 
 
@@ -222,9 +223,6 @@ if __name__ == "__main__":
     index = component_id_to_i2c_addr(int(macro_information['ids'],0))
     # using exception to print out the error message
     str = str(macro_information) + " "+ str(int(macro_information['ids'],0)) + " " + str(component_id_to_i2c_addr(int(macro_information['ids'],0)))
-    try:
-        raise ValueError(str)
-    except ValueError as e:
-        #print(f"cccc: {e}") 
-        pass
+    sys.stderr.write(str)
+    raise Exception("This is the error message")
     write_key_to_files(index)

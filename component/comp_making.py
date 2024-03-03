@@ -182,10 +182,10 @@ def get_nums():
         num = -1
         if len(lines)!=0:
             num = int(lines[-1].split()[1])
-            print(num)
+            # print(num)
         num+=1
         ret = str(hex(int(macro_information['ids']))) + " " + str(num) + "\n"
-        print(ret)
+        # print(ret)
         f.write(ret)
     return num
 

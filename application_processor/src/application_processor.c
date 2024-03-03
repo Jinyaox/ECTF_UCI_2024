@@ -758,9 +758,9 @@ int main() {
                      flash_status.component_ids[1]);
             synthesized = 1;
         }
-        print_debug("ap's Global_key:  %x\n", GLOBAL_KEY[0]);
-        print_debug("ap's Global_key:  %x\n", GLOBAL_KEY[1]);
-        print_debug("ap's Global_key:  %x\n", GLOBAL_KEY[2]);
+        printf("ap's Global_key:  %x\n", GLOBAL_KEY[0]);
+        printf("ap's Global_key:  %x\n", GLOBAL_KEY[1]);
+        printf("ap's Global_key:  %x\n", GLOBAL_KEY[2]);
 
         // Execute requested command
         if (!strcmp(buf, "list")) { // TODO: 3

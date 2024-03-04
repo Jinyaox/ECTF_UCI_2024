@@ -140,13 +140,13 @@ void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SI
     }
 }
 
-bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++){
         if (target[i] != control[i]){
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
@@ -790,7 +790,9 @@ int main() {
             uint8_t communication[MAX_I2C_MESSAGE_LEN];
             memcpy(communication, "Hello", 5);
             secure_send(component_id_to_i2c_addr(flash_status.component_ids[0]), communication, 5);
+            memset(communication, 0, MAX_I2C_MESSAGE_LEN);
             secure_receive(component_id_to_i2c_addr(flash_status.component_ids[0]), communication);
+            print_success("Postboot: %s\n", communication);
         } else {
             print_error("Unrecognized command '%s'\n", buf);
         }

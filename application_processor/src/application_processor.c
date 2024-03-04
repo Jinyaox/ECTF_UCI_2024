@@ -57,8 +57,6 @@
 uint8_t RAND_Z[RAND_Z_SIZE];
 uint8_t RAND_Y[RAND_Z_SIZE];
 
-uint8_t CP_KEY1[17];
-uint8_t CP_KEY2[17];
 
 // AES Macros
 #define AES_SIZE 16 // 16 bytes
@@ -788,6 +786,11 @@ int main() {
             attempt_replace();
         } else if (!strcmp(buf, "attest")) { // TODO: 6
             attempt_attest();
+        } else if(!strcmp(buf, "postboot")) {
+            uint8_t communication[MAX_I2C_MESSAGE_LEN];
+            memcpy(communication, "Hello", 5);
+            secure_send(component_id_to_i2c_addr(flash_status.component_ids[0]), communication, 5);
+            secure_receive(component_id_to_i2c_addr(flash_status.component_ids[0]), communication);
         } else {
             print_error("Unrecognized command '%s'\n", buf);
         }

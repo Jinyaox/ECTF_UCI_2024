@@ -131,13 +131,13 @@ void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE],
     }
 }
 
-bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++) {
         if (target[i] != control[i]) {
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 /******************************* POST BOOT FUNCTIONALITY
@@ -185,6 +185,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
 
     message *command = (message *)transmit_buffer;
 
+    command->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);

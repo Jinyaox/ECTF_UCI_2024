@@ -13,27 +13,24 @@
  */
 
 #include "board.h"
+#include "board_link.h"
 #include "i2c.h"
 #include "led.h"
 #include "mxc_delay.h"
 #include "mxc_errors.h"
 #include "nvic_table.h"
+#include "simple_i2c_peripheral.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include "board_link.h"
-#include "simple_i2c_peripheral.h"
-
-
 
 // Includes from containerized build
 #include "ectf_params.h"
 
 // Include cache disable
-#include "disable_cache.h"
 #include "Rand_lib.h"
+#include "disable_cache.h"
 #include "key_exchange.h"
-
 
 #ifdef POST_BOOT
 #include "led.h"
@@ -53,8 +50,8 @@
 #define ATTESTATION_DATE "08/08/08"
 #define ATTESTATION_CUSTOMER "Fritz"
 */
-//AES
-#define AES_SIZE 16// 16 bytes
+// AES
+#define AES_SIZE 16 // 16 bytes
 #define RAND_Z_SIZE 8
 #define RAND_Y_SIZE 8
 uint8_t RAND_Y[RAND_Y_SIZE];
@@ -63,9 +60,10 @@ uint8_t GLOBAL_KEY[AES_SIZE];
 
 uint8_t communication[MAX_I2C_MESSAGE_LEN];
 
-uint8_t synthesized=0;
+uint8_t synthesized = 0;
 
-/******************************** TYPE DEFINITIONS ********************************/
+/******************************** TYPE DEFINITIONS
+ * ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
     COMPONENT_CMD_NONE,
@@ -78,18 +76,19 @@ typedef enum {
     COMPONENT_CMD_POSTBOOT_VALIDATE,
 } component_cmd_t;
 
-/******************************** TYPE DEFINITIONS ********************************/
+/******************************** TYPE DEFINITIONS
+ * ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
     uint8_t comp_ID[4];
     uint8_t rand_z[RAND_Z_SIZE];
     uint8_t rand_y[RAND_Z_SIZE];
-    uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
+    uint8_t remain[MAX_I2C_MESSAGE_LEN - 21];
 } message;
 
-
-/********************************* FUNCTION DECLARATIONS **********************************/
+/********************************* FUNCTION DECLARATIONS
+ * **********************************/
 // Core function definitions
 void component_process_cmd(void);
 void process_boot(void);
@@ -97,12 +96,12 @@ void process_scan(void);
 void process_validate(void);
 void process_attest(void);
 
-/********************************* GLOBAL VARIABLES **********************************/
+/********************************* GLOBAL VARIABLES
+ * **********************************/
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
-
+uint8_t string_buffer[MAX_I2C_MESSAGE_LEN - 21];
 
 /********************************* UTILITIES **********************************/
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
@@ -110,37 +109,39 @@ void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
         str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF;
 }
 
-
-void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
+void uint8_to_uint32(uint8_t str_uint8[4], uint32_t *str_uint32) {
     *str_uint32 = 0; // Initialize to zero
-    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)str_uint8[i] << 8 * (3 - i);
+    for (int i = 0; i < 4; i++)
+        *str_uint32 |= (uint32_t)str_uint8[i] << 8 * (3 - i);
 }
 
 /*Return 1 if the same and 0 if different*/
-int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
+int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32) {
     int counter = 0;
-    for(int i = 0; i < 4; i++)
-        if(str_uint8[i] == (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF)
+    for (int i = 0; i < 4; i++)
+        if (str_uint8[i] == (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF)
             counter++;
     return counter == 4;
 }
 
-void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
-    for (int i = 0; i < RAND_Z_SIZE; i++){
+void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE],
+                          uint8_t control[RAND_Z_SIZE]) {
+    for (int i = 0; i < RAND_Z_SIZE; i++) {
         target[i] = control[i];
     }
 }
 
 bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
-    for (int i = 0; i < RAND_Z_SIZE; i++){
-        if (target[i] != control[i]){
+    for (int i = 0; i < RAND_Z_SIZE; i++) {
+        if (target[i] != control[i]) {
             return false;
         }
     }
     return true;
 }
 
-/******************************* POST BOOT FUNCTIONALITY *********************************/
+/******************************* POST BOOT FUNCTIONALITY
+ * *********************************/
 /**
  * @brief Secure Send
  *
@@ -156,19 +157,21 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    message* challenge = (message*)challenge_buffer;
-    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    message *challenge = (message *)challenge_buffer;
+    Rand_NASYC(RAND_Y, RAND_Y_SIZE);
     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
 
     secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
-    
-    int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+
+    int len_ans =
+        // secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+        secure_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
     if (len_ans == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
-    message* response_ans = (message*)answer_buffer;
+    message *response_ans = (message *)answer_buffer;
     // compare cmd code
     if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
         return ERROR_RETURN;
@@ -180,12 +183,12 @@ void secure_send(uint8_t *buffer, uint8_t len) {
         return ERROR_RETURN;
     }
 
-    message* command = (message*)transmit_buffer;
+    message *command = (message *)transmit_buffer;
 
     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
-    for(int x = 0; x < len; x++){
+    for (int x = 0; x < len; x++) {
         command->remain[x] = buffer[x];
     }
 
@@ -203,39 +206,42 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  * functionality. This function must be implemented by your team to align with
  * the security requirements.
  */
-int secure_receive(uint8_t *buffer) { 
+int secure_receive(uint8_t *buffer) {
     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    
-    // int len_chlg = secure_wait_and_receive_packet(challenge_buffer, GLOBAL_KEY);
-    // if (len_chlg == ERROR_RETURN) {
+
+    // int len_chlg = secure_wait_and_receive_packet(challenge_buffer,
+    // GLOBAL_KEY); if (len_chlg == ERROR_RETURN) {
     //     return ERROR_RETURN;
     // }
 
     // message* challenge = (message*)challenge_buffer;
-    message* challenge = (message*)buffer;
+    message *challenge = (message *)buffer;
     // compare cmd code
     if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
         return ERROR_RETURN;
     }
 
-    message* answer = (message*)answer_buffer;
+    message *answer = (message *)answer_buffer;
 
-    Rand_ASYC(RAND_Y, RAND_Z_SIZE);
+    Rand_NASYC(RAND_Y, RAND_Z_SIZE);
     uint8Arr_to_uint8Arr(RAND_Z, challenge->rand_z);
     answer->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(answer->rand_y, RAND_Y);
 
-    secure_send_packet_and_ack(answer_buffer, GLOBAL_KEY);;
+    secure_send_packet_and_ack(answer_buffer, GLOBAL_KEY);
+    ;
 
-    int len_msg = secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+    int len_msg =
+        // secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+        secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     if (len_msg == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
-    message* command = (message*)receive_buffer;
+    message *command = (message *)receive_buffer;
 
     // compare cmd code
     if (command->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
@@ -246,33 +252,37 @@ int secure_receive(uint8_t *buffer) {
     if (y_check != 1) {
         return ERROR_RETURN;
     }
-    for(int x = 0; x < MAX_I2C_MESSAGE_LEN-21; x++){
+    for (int x = 0; x < MAX_I2C_MESSAGE_LEN - 21; x++) {
         buffer[x] = command->remain[x];
     }
 
     return len_msg;
 }
 
-
-// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
-void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
-    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
+// Not sure what the component will send back to AP, for Now I Just assume the
+// trasmit_buffer input will have the message already
+void secure_receive_and_send(uint8_t *receive_buffer, uint8_t *transmit_buffer,
+                             uint8_t len) {
+    memset(receive_buffer, 0, 256); // Keep eye on all the memset method, Zuhair
+                                    // says this could be error pron
     secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-    message * command = (message *)receive_buffer;
-    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    message *command = (message *)receive_buffer;
+    Rand_NASYC(RAND_Y, RAND_Y_SIZE);
     uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
-    message * send_packet = (message *)validate_buffer;
+    message *send_packet = (message *)validate_buffer;
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     memcpy(send_packet->rand_y, RAND_Y, RAND_Y_SIZE);
     secure_send_packet_and_ack(validate_buffer, GLOBAL_KEY);
-    memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
-    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
-        printf("Component transmitting failed, the transmitting takes too long");
+    memset(receive_buffer, 0, 256); // Keep eye on all the memset method, Zuhair
+                                    // says this could be error pron
+    if (secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY) < 0) {
+        printf(
+            "Component transmitting failed, the transmitting takes too long");
         return;
     }
-    command = (message*) receive_buffer;
-    if(command->rand_y != RAND_Y){
+    command = (message *)receive_buffer;
+    if (command->rand_y != RAND_Y) {
         printf("Component has received expired message");
     }
     send_packet = (message *)transmit_buffer;
@@ -280,7 +290,8 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
-/******************************* FUNCTION DEFINITIONS *********************************/
+/******************************* FUNCTION DEFINITIONS
+ * *********************************/
 
 // Example boot sequence
 // Your design does not need to change this
@@ -318,7 +329,7 @@ void boot() {
 void component_process_cmd() {
     memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
     secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-    message* command = (message*) receive_buffer;
+    message *command = (message *)receive_buffer;
 
     // Output to application processor dependent on command received
     switch (command->opcode) {
@@ -332,10 +343,10 @@ void component_process_cmd() {
         process_attest();
         break;
     case COMPONENT_CMD_POSTBOOT_VALIDATE:
-        secure_receive(communication);
+        secure_receive(receive_buffer);
         memset(communication, 0, MAX_I2C_MESSAGE_LEN);
-        memcpy(communication, "hello", 5);
-        secure_send(communication, 5);
+        memcpy(communication, "yourmom", 7);
+        secure_send(communication, 7);
     default:
         printf("Error: Unrecognized command received %d\n", command->opcode);
         break;
@@ -344,20 +355,20 @@ void component_process_cmd() {
 
 // This if for the functionality of Boot
 void process_boot() {
-    // The AP requested a boot. 
-    //Validate the Component ID
-    message* command = (message*) receive_buffer;
+    // The AP requested a boot.
+    // Validate the Component ID
+    message *command = (message *)receive_buffer;
 
-    if(uint8_uint32_cmp(command->comp_ID,COMPONENT_ID) != 1){
+    if (uint8_uint32_cmp(command->comp_ID, COMPONENT_ID) != 1) {
         printf("The Component ID checks failed at the component sided");
         return;
     }
-    //Validation passed
-    //Starts Boot
-    
-    //Send Boot comfirmation message back to AP
-    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
-    message * send_packet = (message*) transmit_buffer;
+    // Validation passed
+    // Starts Boot
+
+    // Send Boot comfirmation message back to AP
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN); // DO WE NEED THIS?
+    message *send_packet = (message *)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_BOOT;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(send_packet->comp_ID, COMPONENT_ID);
@@ -369,9 +380,9 @@ void process_boot() {
 void process_scan() {
     // The AP requested a scan. Respond with the Component ID
 
-    message* command = (message*) receive_buffer;
-    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
-    message * send_packet = (message*) transmit_buffer;
+    message *command = (message *)receive_buffer;
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN); // DO WE NEED THIS?
+    message *send_packet = (message *)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_SCAN;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_t comp_id = COMPONENT_ID;
@@ -382,30 +393,30 @@ void process_scan() {
 void process_attest() {
     // The AP requested attestation. Respond with the attestation data
 
-    //Validate the Component ID; plaintext[1:4]
-    message* command = (message*) receive_buffer;
+    // Validate the Component ID; plaintext[1:4]
+    message *command = (message *)receive_buffer;
 
-    if(uint8_uint32_cmp(command->comp_ID, COMPONENT_ID) != 1){
+    if (uint8_uint32_cmp(command->comp_ID, COMPONENT_ID) != 1) {
         printf("The Component ID checks failed at the component sided");
         return;
     }
 
     // Start to move atttestation data into the transmit_buffer
-    memset(string_buffer, 0, MAX_I2C_MESSAGE_LEN-21);
-    uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
-                ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
-    
+    memset(string_buffer, 0, MAX_I2C_MESSAGE_LEN - 21);
+    uint8_t len =
+        sprintf((char *)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
+                ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) +
+        1;
 
-    //Move the cipher text into the transmit_buffer and reday for transfer
-    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//DO WE NEED THIS?
-    message* send_packet = (message*)transmit_buffer;
+    // Move the cipher text into the transmit_buffer and reday for transfer
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN); // DO WE NEED THIS?
+    message *send_packet = (message *)transmit_buffer;
     send_packet->opcode = COMPONENT_CMD_ATTEST;
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_to_uint8(send_packet->comp_ID, COMPONENT_ID);
     memcpy(send_packet->remain, string_buffer, sizeof(send_packet->remain));
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
-
 
 /*********************************** MAIN *************************************/
 
@@ -425,12 +436,12 @@ int main(void) {
     LED_On(LED2);
 
     while (1) {
-        if(synthesized == 0){
+        if (synthesized == 0) {
 
-            // key_sync(GLOBAL_KEY);
+            key_sync(GLOBAL_KEY);
             synthesized = 1;
             // send_packet_and_ack(16, MASK);
-            //send_packet_and_ack(16, FINAL_MASK);
+            // send_packet_and_ack(16, FINAL_MASK);
         }
         component_process_cmd();
     }

@@ -61,6 +61,8 @@ uint8_t RAND_Y[RAND_Y_SIZE];
 uint8_t RAND_Z[RAND_Z_SIZE];
 uint8_t GLOBAL_KEY[AES_SIZE];
 
+uint8_t communication[MAX_I2C_MESSAGE_LEN];
+
 uint8_t synthesized=0;
 
 /******************************** TYPE DEFINITIONS ********************************/
@@ -330,9 +332,10 @@ void component_process_cmd() {
         process_attest();
         break;
     case COMPONENT_CMD_POSTBOOT_VALIDATE:
-        uint8_t communication[MAX_I2C_MESSAGE_LEN];
         secure_receive(communication);
-        secure_send(communication);
+        memset(communication, 0, MAX_I2C_MESSAGE_LEN);
+        memcpy(communication, "hello", 5);
+        secure_send(communication, 5);
     default:
         printf("Error: Unrecognized command received %d\n", command->opcode);
         break;

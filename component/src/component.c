@@ -165,8 +165,8 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
 
     int len_ans =
-        // secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
-        secure_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+        secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+        // secure_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
     if (len_ans == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -236,8 +236,8 @@ int secure_receive(uint8_t *buffer) {
     ;
 
     int len_msg =
-        // secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
-        secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+        secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+        // secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     if (len_msg == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -346,8 +346,8 @@ void component_process_cmd() {
     case COMPONENT_CMD_POSTBOOT_VALIDATE:
         secure_receive(receive_buffer);
         memset(communication, 0, MAX_I2C_MESSAGE_LEN);
-        memcpy(communication, "yourmom", 7);
-        secure_send(communication, 7);
+        memcpy(communication, "whutsup\0", 8);
+        secure_send(communication, 8);
     default:
         printf("Error: Unrecognized command received %d\n", command->opcode);
         break;

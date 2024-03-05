@@ -212,13 +212,13 @@ int secure_receive(uint8_t *buffer) {
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 
-    int len_chlg = secure_wait_and_receive_packet(challenge_buffer,
-    GLOBAL_KEY); if (len_chlg == ERROR_RETURN) {
-        return ERROR_RETURN;
-    }
+    // int len_chlg = secure_wait_and_receive_packet(challenge_buffer,
+    // GLOBAL_KEY); if (len_chlg == ERROR_RETURN) {
+    //     return ERROR_RETURN;
+    // }
 
-    message* challenge = (message*)challenge_buffer;
-    // message *challenge = (message *)buffer;
+    // message* challenge = (message*)challenge_buffer;
+    message *challenge = (message *)buffer;
     // compare cmd code
     if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
         return ERROR_RETURN;
@@ -343,11 +343,11 @@ void component_process_cmd() {
     case COMPONENT_CMD_ATTEST:
         process_attest();
         break;
-    // case COMPONENT_CMD_POSTBOOT_VALIDATE:
-    //     secure_receive(receive_buffer);
-    //     memset(communication, 0, MAX_I2C_MESSAGE_LEN);
-    //     memcpy(communication, "whutsup\0", 8);
-    //     secure_send(communication, 8);
+    case COMPONENT_CMD_POSTBOOT_VALIDATE:
+        secure_receive(receive_buffer);
+        memset(communication, 0, MAX_I2C_MESSAGE_LEN);
+        memcpy(communication, "whutsup\0", 8);
+        secure_send(communication, 8);
     default:
         printf("Error: Unrecognized command received %d\n", command->opcode);
         break;

@@ -316,7 +316,7 @@ void init() {
                       sizeof(flash_entry));
 
     // Write Component IDs from flash if first boot e.g. flash unwritten
-    if (flash_status.flash_magic != FLASH_MAGIC) {
+    // if (flash_status.flash_magic != FLASH_MAGIC) {
         print_debug("First boot, setting flash!\n");
 
         flash_status.flash_magic = FLASH_MAGIC;
@@ -327,7 +327,7 @@ void init() {
 
         flash_simple_write(FLASH_ADDR, (uint32_t *)&flash_status,
                            sizeof(flash_entry));
-    }
+    // }
 
     // Initialize board link interface
     board_link_init();
@@ -786,13 +786,13 @@ int main() {
             attempt_replace();
         } else if (!strcmp(buf, "attest")) { // TODO: 6
             attempt_attest();
-        // } else if(!strcmp(buf, "postboot")) {
-        //     uint8_t communication[MAX_I2C_MESSAGE_LEN];
-        //     memcpy(communication, "Hello", 5);
-        //     secure_send(component_id_to_i2c_addr(flash_status.component_ids[0]), communication, 5);
-        //     memset(communication, 0, MAX_I2C_MESSAGE_LEN);
-        //     secure_receive(component_id_to_i2c_addr(flash_status.component_ids[0]), communication);
-        //     print_success("Postboot: %s\n", communication);
+        } else if(!strcmp(buf, "postboot")) {
+            uint8_t communication[MAX_I2C_MESSAGE_LEN];
+            memcpy(communication, "Hello", 5);
+            secure_send(component_id_to_i2c_addr(flash_status.component_ids[0]), communication, 5);
+            memset(communication, 0, MAX_I2C_MESSAGE_LEN);
+            secure_receive(component_id_to_i2c_addr(flash_status.component_ids[0]), communication);
+            print_success("Postboot: %s\n", communication);
         } else {
             print_error("Unrecognized command '%s'\n", buf);
         }

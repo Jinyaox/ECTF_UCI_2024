@@ -142,13 +142,13 @@ void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SI
     }
 }
 
-bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++){
         if (target[i] != control[i]){
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/

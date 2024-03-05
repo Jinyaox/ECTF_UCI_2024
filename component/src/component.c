@@ -129,13 +129,13 @@ void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SI
     }
 }
 
-bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++){
         if (target[i] != control[i]){
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
@@ -155,7 +155,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
     message* challenge = (message*)challenge_buffer;
-    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    Rand_NASYC(RAND_Y, RAND_Y_SIZE);
     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
 
@@ -180,6 +180,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
 
     message* command = (message*)transmit_buffer;
 
+    command->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
@@ -219,7 +220,7 @@ int secure_receive(uint8_t *buffer) {
 
     message* answer = (message*)answer_buffer;
 
-    Rand_ASYC(RAND_Y, RAND_Z_SIZE);
+    Rand_NASYC(RAND_Y, RAND_Z_SIZE);
     uint8Arr_to_uint8Arr(RAND_Z, challenge->rand_z);
     answer->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);
@@ -256,7 +257,7 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
     memset(receive_buffer, 0, 256);//Keep eye on all the memset method, Zuhair says this could be error pron
     secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message * command = (message *)receive_buffer;
-    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    Rand_NASYC(RAND_Y, RAND_Y_SIZE);
     uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
     message * send_packet = (message *)validate_buffer;
     send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;

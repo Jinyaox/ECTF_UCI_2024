@@ -109,7 +109,7 @@ int timed_wait_and_receive_packet(uint8_t* packet) {
 void secure_send_packet_and_ack(uint8_t* packet, uint8_t* GLOBAL_KEY) {
     uint8_t ciphertext[MAX_I2C_MESSAGE_LEN];
     encrypt_sym(packet, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, ciphertext);
-    send_packet_and_ack(MAX_I2C_MESSAGE_LEN, ciphertext);
+    send_packet_and_ack(MAX_I2C_MESSAGE_LEN-1, ciphertext);
 }
 
 

@@ -1,5 +1,10 @@
 from pathlib import Path
 import re
+import secrets
+import os
+import csv
+import sys
+
 
 
 # this is for deployment
@@ -29,7 +34,7 @@ macro_information={}
 # End of Global Data Definition: 
 
 def get_id(macro):
-    pattern = r'#define COMPONENT_ID (\d+)'
+    pattern = r'#define COMPONENT_ID (0x[\da-fA-F]+)'
     match = re.search(pattern, macro)
     if match:
         # Extract the number from the matched group
@@ -103,10 +108,7 @@ def file_exist(file_path)->bool:
     else:
         return False
 
-def change_byte_to_const(byte_stream, name)->str:
-    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
-    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
-    return macro_string
+
     
 def Read_files()->None:
     if file_exist(Path(f"../deployment/{hex(int(macro_information['ids']))}.txt")):
@@ -121,34 +123,95 @@ def Read_files()->None:
         macro_information["mask"]=change_byte_to_const("0000000000000000".encode(),'MASK')
         macro_information["final"]=change_byte_to_const("0000000000000000".encode(),'FINAL_MASK')
 
+def change_byte_to_const(byte_stream, name)->str:
+    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
+    macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
+    return macro_string
 
-def write_key_to_files()->None:
+def get_secret_key_from_csv(filename, row):
+    # Read the secret key from the CSV file
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        for i, line in enumerate(reader):
+            if i == row:
+                #print("Secret key: {}".format(line[0]))
+                return line[0]
+            
+def component_id_to_i2c_addr(component_id):
+    component_id = int(component_id, 16)
+    component_id &= 0xFF
+    return component_id
+
+def write_key_to_files(index)->None:
     """
     Given some paths for component, writes the key shares repsectively to the file
     Also write everything back to the AP file, encrypted, of course
     """
-
-    # Finally write the keys into the AP's parameter header
-    fh = open("inc/ectf_params.h", "w")
-    fh.write("#ifndef __ECTF_PARAMS__\n")
-    fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define COMPONENT_ID {macro_information['ids']}\n") 
-    fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
-    fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
-    fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
-    fh.write(f"#define ATTESTATION_CUSTOMER \"{macro_information['customer']}\"\n") 
-    fh.write("#endif\n")
-    fh.close()
+    index = int(index)
+    key_share = secrets.token_bytes(16)
+    if file_exist(Path(f"../deployment/cc.csv")):
+        mask = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2)
+        final = get_secret_key_from_csv(Path(f"../deployment/cc.csv"), index*2+1)
+    else:
+        print("No file found")
+        print("error")
+        return
 
     fh = open("inc/key.h", "w")
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
-    fh.write(macro_information["share"]+'\n')
-    fh.write(macro_information["mask"]+'\n')
-    fh.write(macro_information["final"]+'\n')    
+    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern const uint8_t MASK[16];\n")
+    fh.write("extern const uint8_t FINAL_MASK[16];\n")
     fh.write("#endif\n")
     fh.close()
+    fh = open("src/key.c", "w")
+    fh.write("#include \"key.h\" \n")
+    fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
+    fh.write('\n')
+    fh.write(mask)
+    fh.write('\n')
+    fh.write(final)
+    fh.write('\n')
+    fh.close()
+
+
+
+
+
+def get_nums():
+    file_path = Path("../comp_count.txt")
+    if not os.path.exists(file_path):
+        # If the file doesn't exist, create it and write "1"
+        with open(file_path, "w") as f:
+            # write nothing
+            #just create the file
+            pass
+        return 1
+
+    with open(file_path, "r+") as f:
+        lines = f.readlines()
+        num = -1
+        if len(lines)!=0:
+            num = int(lines[-1].split()[1])
+            #print(num)
+        num+=1
+        ret = str(hex(int(macro_information['ids']))) + " " + str(num) + "\n"
+        #print(ret)
+        f.write(ret)
+    return num
+
+        
+
+
+       
+
+    
+
+
+
+
 
 
 
@@ -156,5 +219,11 @@ def write_key_to_files()->None:
 
 if __name__ == "__main__":
     extract_info()
-    Read_files()
-    write_key_to_files()
+    #print(macro_information)
+    #Read_files()
+
+    index = component_id_to_i2c_addr(macro_information['ids'])
+    #print(index)
+    # using exception to print out the error message
+    #sys.stderr.write(str)
+    write_key_to_files(index)

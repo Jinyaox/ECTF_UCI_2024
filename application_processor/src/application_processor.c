@@ -57,6 +57,7 @@
 uint8_t RAND_Z[RAND_Z_SIZE];
 uint8_t RAND_Y[RAND_Z_SIZE];
 
+
 // AES Macros
 #define AES_SIZE 16 // 16 bytes
 
@@ -114,33 +115,38 @@ int encrypt_sym(uint8_t *plaintext, size_t len, uint8_t *key,
 
 /*Tested converters*/
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
-    for (int i = 0; i < 4; i++) str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3-i));
+    for (int i = 0; i < 4; i++)
+        str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF;
 }
+
 
 void uint8_to_uint32(uint8_t str_uint8[4], uint32_t* str_uint32) {
     *str_uint32 = 0; // Initialize to zero
-    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)(str_uint8[i]) << (8*(3-i));
+    for (int i = 0; i < 4; i++) *str_uint32 |= (uint32_t)str_uint8[i] << 8 * (3 - i);
 }
 
 /*Return 1 if the same and 0 if different*/
 int uint8_uint32_cmp(uint8_t str_uint8[4], uint32_t str_uint32){
     int counter = 0;
     for(int i = 0; i < 4; i++)
-        if(str_uint8[i] == (uint8_t)(str_uint32 >> (8 * (3-i)))) ++counter;
+        if(str_uint8[i] == (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF)
+            counter++;
     return counter == 4;
 }
 
 void uint8Arr_to_uint8Arr(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
-    for (int i = 0; i < RAND_Z_SIZE; i++) target[i] = (control[i]);
+    for (int i = 0; i < RAND_Z_SIZE; i++){
+        target[i] = control[i];
+    }
 }
 
-bool random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
+int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
     for (int i = 0; i < RAND_Z_SIZE; i++){
-        if(target[i] != control[i]){
-            return false;
+        if (target[i] != control[i]){
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
@@ -330,6 +336,10 @@ void init() {
 // Send a command to a component and receive the result
 int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Send message
+    //These are reserved address for the Board, we should not use these
+    if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            return ERROR_RETURN;
+    }
     int result = secure_send_packet(addr, transmit,GLOBAL_KEY); 
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
@@ -349,13 +359,27 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 // We're assuming this doesn't need protection/modification
 int scan_components() {
     // Print out provisioned component IDs
+    // print global key
+    // print_info("G> ");
+    // print_hex_info(GLOBAL_KEY, AES_SIZE);
+    // // print m1 m2
+    // print_info("M1> ");
+    // print_hex_info(M1, AES_SIZE);
+    // print_info("M2> ");
+    // print_hex_info(M2, AES_SIZE);
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
     }
+    // print_info("Mask1> ");
+    // print_hex_info(CP_KEY1, 16);
+    // print_info("Mask2> ");
+    // print_hex_info(CP_KEY2, 16);
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    int check = 0;
 
     // Scan scan command to each component
     for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
@@ -376,17 +400,79 @@ int scan_components() {
         // Success, device is present
         if (len > 0) {
             message* scan = (message*)receive_buffer;
-            print_info("F>0x%08x\n", scan->comp_ID);
+            uint32_t comp_id = 0;
+            for(int i = 0; i < 4; i++) {
+                comp_id = (comp_id << 8) | scan->comp_ID[i];
+            }
+            print_info("F>0x%08x\n", comp_id);
+            check += 1;
         }
     }
-    print_success("List\n");
-    return SUCCESS_RETURN;
+    if(check == flash_status.component_cnt){
+        print_success("List\n");
+        return SUCCESS_RETURN;
+    }
+    else{
+        print_error("List\n");
+        return ERROR_RETURN;
+    }
+}
+
+int preboot_validate_component_id(){
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    int check = 0;
+
+    // Scan scan command to each component
+    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
+        // I2C Blacklist:
+        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
+        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            continue;
+        }
+
+        // Create command message
+        message* command = (message*)transmit_buffer;
+
+        command->opcode = COMPONENT_CMD_SCAN;
+
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+
+        // Success, device is present
+        if (len > 0) {
+            message* scan = (message*)receive_buffer;
+            uint32_t comp_id = 0;
+            for(int i = 0; i < 4; i++) {
+                comp_id = (comp_id << 8) | scan->comp_ID[i];
+            }
+            for(int i = 0; i < flash_status.component_cnt; ++i){
+                if(flash_status.component_ids[i] == comp_id){
+                    check += 1;
+                    break;
+                }
+            }
+        }
+    }
+    if(check == flash_status.component_cnt){
+        return SUCCESS_RETURN;
+    }
+    else{
+        return ERROR_RETURN;
+    }
 }
 
 int validate_and_boot_components() {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // If the two provisioned ids are not matched with exisiting ids, abort booting
+    if(preboot_validate_component_id() == ERROR_RETURN){
+        print_error("Component id doesn't matched\n");
+        return ERROR_RETURN;
+    }
 
     // Send validate command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
@@ -411,8 +497,9 @@ int validate_and_boot_components() {
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
-            print_error("Could not validate or boot component\n");
-            return ERROR_RETURN;
+            print_error("Could not validate or boot component:%d\n",i+1);
+            // continue;
+           return ERROR_RETURN;
         }
 
         message* response = (message* )receive_buffer;
@@ -429,6 +516,9 @@ int validate_and_boot_components() {
                         flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
+        else{
+            print_info("0x%08x>%s\n", flash_status.component_ids[i], response->remain);
+        }
 
         // compare Z value
         int z_check = random_checker(response->rand_z, RAND_Z);
@@ -441,6 +531,17 @@ int validate_and_boot_components() {
 }
 
 int attest_component(uint32_t component_id) {
+    int check = -1;
+    for(int i = 0; i < flash_status.component_cnt; ++i){
+        if(flash_status.component_ids[i] == component_id){
+            check = 0;
+            break;
+        }
+    }
+    if(check == -1){
+        print_error("Could not attest\n");
+        return ERROR_RETURN;
+    }
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
@@ -578,7 +679,7 @@ void attempt_boot() {
         print_error("Failed to validate and/or boot components\n");
         return;
     }
-    print_debug("All Components validated\n");
+    // print_info("All Components validated\n");
 
     // Print boot message
     // This always needs to be printed when booting
@@ -647,6 +748,8 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    memset(GLOBAL_KEY, 0, AES_SIZE);
+    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     // Print the component IDs to be helpful
     // Your design does not need to do this
@@ -660,11 +763,18 @@ int main() {
 
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
+
         if ((synthesized == 0) ) {
             key_sync(GLOBAL_KEY, flash_status.component_cnt,
                      flash_status.component_ids[0],
                      flash_status.component_ids[1]);
             synthesized = 1;
+
+
+            // memset(CP_KEY1, 0, 17);
+            // memset(CP_KEY2, 0, 17);
+            // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
+            // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
         }
 
         // Execute requested command
@@ -676,6 +786,13 @@ int main() {
             attempt_replace();
         } else if (!strcmp(buf, "attest")) { // TODO: 6
             attempt_attest();
+        // } else if(!strcmp(buf, "postboot")) {
+        //     uint8_t communication[MAX_I2C_MESSAGE_LEN];
+        //     memcpy(communication, "Hello", 5);
+        //     secure_send(component_id_to_i2c_addr(flash_status.component_ids[0]), communication, 5);
+        //     memset(communication, 0, MAX_I2C_MESSAGE_LEN);
+        //     secure_receive(component_id_to_i2c_addr(flash_status.component_ids[0]), communication);
+        //     print_success("Postboot: %s\n", communication);
         } else {
             print_error("Unrecognized command '%s'\n", buf);
         }

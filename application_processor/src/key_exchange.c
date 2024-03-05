@@ -1,10 +1,5 @@
 // extern flash_status;
-#include "Rand_lib.h"
-#include "board_link.h"
-#include "ectf_params.h" //to get to all the macros
-#include "simple_i2c_controller.h"
-#include "xor_secure.h"
-#include "key.h"
+
 #include "key_exchange.h"
 
 
@@ -15,7 +10,7 @@ char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
     XOR_secure(M1, KEY_SHARE, 16, cache);
-    cache[17] = '2';
+    cache[17] = '1';
 
     int return_status = send_packet(addr, 18, cache);
     
@@ -23,7 +18,7 @@ char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     int len = poll_and_receive_packet(addr, cache);
     
     XOR_secure(KEY_SHARE, cache, 16, cache);
-    XOR_secure(cache, F1, 16, cache); // Should be the dest for the fourth
+    XOR_secure(cache, F1, 16, dest); // Should be the dest for the fourth
                                 // argument?
     return;
 }

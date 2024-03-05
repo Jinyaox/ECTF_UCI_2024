@@ -210,11 +210,11 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
 
     int len_msg = secure_send_packet(address, transmit_buffer, GLOBAL_KEY);
     if (len_msg == ERROR_RETURN) {
-        print_error("The AP failed to send the buffer message during post boot\n");
+        print_error("The Component failed to send the buffer message during post boot\n");
         return ERROR_RETURN;
     }
 
-    print_info("Secure Send in AP done with exit: %d\n", len_msg);
+    print_success("Secure Send in AP done with exit: %d %d\n", len_chlg, len_msg);
 
     return len_msg;
 }
@@ -290,7 +290,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
 
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
     uint8_t result = secure_poll_and_receive_packet(address, buffer, GLOBAL_KEY);
-    print_info("Secure Receive in AP done with exit: %d\n", result);
+    print_success("Secure Receive in AP done with exit: %d\n", result);
     return result;
 }
 

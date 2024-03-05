@@ -163,60 +163,74 @@ int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
  * This function must be implemented by your team to align with the security requirements.
 
 */
-int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
-    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+// int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
+//     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+//     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+//     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    message* challenge = (message*)challenge_buffer;
-    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
-    challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
-    uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
+//     message* challenge = (message*)challenge_buffer;
+//     Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+//     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+//     uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
 
-    int len_chlg = secure_send_packet(address, challenge_buffer, GLOBAL_KEY);
-    print_info("secure_send in AP done with challenge send with info: %d and send result: %d\n", challenge_buffer, len_chlg);
+//     int len_chlg = secure_send_packet(address, challenge_buffer, GLOBAL_KEY);
+//     print_info("secure_send in AP done with challenge send with info: %d and send result: %d\n", challenge_buffer, len_chlg);
+//     if (len_chlg == ERROR_RETURN) {
+//         print_error("The AP failed to send the challenge buffer during post boot\n");
+//         return ERROR_RETURN;
+//     }
+    
+//     int len_ans = secure_poll_and_receive_packet(address, answer_buffer, GLOBAL_KEY);
+//     if (len_ans == ERROR_RETURN) {
+//         print_error("The AP failed to receive the answer buffer during post boot\n");
+//         return ERROR_RETURN;
+//     }
+
+//     message* response_ans = (message*)answer_buffer;
+//     // compare cmd code
+//     if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+//         print_error("Invalid command in answer message from component during post boot");
+//         return ERROR_RETURN;
+//     }
+
+//     // compare Z value
+//     int z_check = random_checker(response_ans->rand_z, RAND_Z);
+//     if (z_check != 1) {
+//         print_error("AP received expired answer message in post boot");
+//         return ERROR_RETURN;
+//     }
+
+//     message* command = (message*)transmit_buffer;
+
+//     uint8Arr_to_uint8Arr(RAND_Y, response_ans->rand_y);
+//     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
+//     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
+//     for(int x = 0; x < len; x++){
+//         command->remain[x] = buffer[x];
+//     }
+
+//     int len_msg = secure_send_packet(address, transmit_buffer, GLOBAL_KEY);
+//     if (len_msg == ERROR_RETURN) {
+//         print_error("The Component failed to send the buffer message during post boot\n");
+//         return ERROR_RETURN;
+//     }
+
+
+//     return len_msg;
+// }
+
+int secure_send(uint8_t address, uint8_t *buffer, uint8_t len){
+    // message* challenge = (message*)buffer;
+    // Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    // challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    // uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
+
+    int len_chlg = secure_send_packet(address, buffer, GLOBAL_KEY);
+    print_info("secure_send in AP done with challenge send with info: %d and send result: %dfrom address %x\n", buffer, len_chlg, address);
     if (len_chlg == ERROR_RETURN) {
         print_error("The AP failed to send the challenge buffer during post boot\n");
         return ERROR_RETURN;
     }
-    
-    int len_ans = secure_poll_and_receive_packet(address, answer_buffer, GLOBAL_KEY);
-    if (len_ans == ERROR_RETURN) {
-        print_error("The AP failed to receive the answer buffer during post boot\n");
-        return ERROR_RETURN;
-    }
-
-    message* response_ans = (message*)answer_buffer;
-    // compare cmd code
-    if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
-        print_error("Invalid command in answer message from component during post boot");
-        return ERROR_RETURN;
-    }
-
-    // compare Z value
-    int z_check = random_checker(response_ans->rand_z, RAND_Z);
-    if (z_check != 1) {
-        print_error("AP received expired answer message in post boot");
-        return ERROR_RETURN;
-    }
-
-    message* command = (message*)transmit_buffer;
-
-    uint8Arr_to_uint8Arr(RAND_Y, response_ans->rand_y);
-    uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
-    uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
-    for(int x = 0; x < len; x++){
-        command->remain[x] = buffer[x];
-    }
-
-    int len_msg = secure_send_packet(address, transmit_buffer, GLOBAL_KEY);
-    if (len_msg == ERROR_RETURN) {
-        print_error("The Component failed to send the buffer message during post boot\n");
-        return ERROR_RETURN;
-    }
-
-
-    return len_msg;
 }
 
 /**

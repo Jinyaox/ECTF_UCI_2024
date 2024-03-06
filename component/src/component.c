@@ -193,6 +193,7 @@ int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
 
 void secure_send(uint8_t * buffer, uint8_t len){
     secure_send_packet_and_ack(buffer, GLOBAL_KEY);
+    print_info("Secure send in component sent message %s\n", buffer);
 }
 
 /**

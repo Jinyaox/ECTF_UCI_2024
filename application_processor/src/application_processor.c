@@ -752,7 +752,7 @@ int main() {
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     memset(GLOBAL_KEY, 0, AES_SIZE);
-    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
     // Print the component IDs to be helpful
     // Your design does not need to do this

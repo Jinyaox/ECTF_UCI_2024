@@ -357,6 +357,25 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     return len;
 }
 
+int insecure_issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
+    // Send message
+    //These are reserved address for the Board, we should not use these
+    if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            return ERROR_RETURN;
+    }
+    int result = send_packet(addr, transmit); 
+    if (result == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+
+    // Receive message
+    int len = poll_and_receive_packet(addr, receive); // Use secure custom function
+    if (len == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+    return len;
+}
+
 /******************************** COMPONENT COMMS ********************************/
 
 // We're assuming this doesn't need protection/modification
@@ -398,7 +417,7 @@ int scan_components() {
         command->opcode = COMPONENT_CMD_SCAN;
 
         // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        int len = insecure_issue_cmd(addr, transmit_buffer, receive_buffer);
 
         // Success, device is present
         if (len > 0) {

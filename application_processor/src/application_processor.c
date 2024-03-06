@@ -213,7 +213,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
         print_error("The AP failed to send the buffer message during post boot\n");
         return ERROR_RETURN;
     }
-
+    print_success("Secure Send Success\n");
     return len_msg;
 }
 
@@ -283,6 +283,7 @@ int secure_receive(i2c_addr_t address, uint8_t *buffer) {
         buffer[x] = command->remain[x];
     }
 
+    print_success("Secure Receive Success\n");
     return len_msg;
 }
 

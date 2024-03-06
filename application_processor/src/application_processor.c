@@ -230,7 +230,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
  * Securely receive data over I2C. This function is utilized in POST_BOOT functionality.
  * This function must be implemented by your team to align with the security requirements.
 */
-// int secure_receive(i2c_addr_t address, uint8_t* buffer) {
+// int secure_receive(i2c_addr_t address, uint8_t *buffer) {
 //     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
 //     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
 //     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -289,7 +289,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
 // }
 
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
-    return secure_poll_and_receive_packet(address, buffer, GLOBAL_KEY);
+    return poll_and_receive_packet(address, buffer);
 }
 
 /**

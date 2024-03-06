@@ -163,6 +163,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     
     int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
     if (len_ans == ERROR_RETURN) {
+        print_error("The AP failed to receive the answer buffer during post boot\n");
         return ERROR_RETURN;
     }
 
@@ -189,6 +190,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     }
 
     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
+    print_success("The Component secure send is done\n");
 }
 
 /**
@@ -249,6 +251,7 @@ int secure_receive(uint8_t *buffer) {
     }
 
     return len_msg;
+       print_success("The Component secure send is with exit: %d %d\n", len_chlg, len_msg);
 }
 
 

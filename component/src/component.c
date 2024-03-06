@@ -103,18 +103,6 @@ uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
 
 /********************************* UTILITIES **********************************/
-#define print_info(...)                                                        \
-    printf("%%info: ");                                                        \
-    printf(__VA_ARGS__);                                                       \
-    printf("%%");                                                              \
-    fflush(stdout)
-#define print_hex_info(...)                                                    \
-    printf("%%info: ");                                                        \
-    print_hex(__VA_ARGS__);                                                    \
-    printf("%%");                                                              \
-    fflush(stdout)
-
-
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
     for (int i = 0; i < 4; i++)
         str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF;
@@ -161,51 +149,46 @@ int random_checker(uint8_t target[RAND_Z_SIZE], uint8_t control[RAND_Z_SIZE]) {
  * functionality. This function must be implemented by your team to align with
  * the security requirements.
  */
-// void secure_send(uint8_t *buffer, uint8_t len) {
-//     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
-//     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
-//     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+void secure_send(uint8_t *buffer, uint8_t len) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-//     message* challenge = (message*)challenge_buffer;
-//     Rand_NASYC(RAND_Y, RAND_Y_SIZE);
-//     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
-//     uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
+    message* challenge = (message*)challenge_buffer;
+    Rand_NASYC(RAND_Y, RAND_Y_SIZE);
+    challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    uint8Arr_to_uint8Arr(challenge->rand_y, RAND_Y);
 
-//     secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
+    secure_send_packet_and_ack(challenge_buffer, GLOBAL_KEY);
+    
+    int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
+    if (len_ans == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
 
-//     int len_ans = secure_timed_wait_and_receive_packet(answer_buffer, GLOBAL_KEY);
-//     if (len_ans == ERROR_RETURN) {
-//         return ERROR_RETURN;
-//     }
+    message* response_ans = (message*)answer_buffer;
+    // compare cmd code
+    if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
+        return ERROR_RETURN;
+    }
 
-//     message* response_ans = (message*)answer_buffer;
-//     // compare cmd code
-//     if (response_ans->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
-//         return ERROR_RETURN;
-//     }
+    // compare Z value
+    int y_check = random_checker(response_ans->rand_y, RAND_Y);
+    if (y_check != 1) {
+        return ERROR_RETURN;
+    }
 
-//     // compare Z value
-//     int y_check = random_checker(response_ans->rand_y, RAND_Y);
-//     if (y_check != 1) {
-//         return ERROR_RETURN;
-//     }
+    message* command = (message*)transmit_buffer;
 
-//     message* command = (message*)transmit_buffer;
+    command->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
+    uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
+    uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
+    uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
+    for(int x = 0; x < len; x++){
+        command->remain[x] = buffer[x];
+    }
 
-//     command->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
-//     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
-//     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
-//     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
-//     for(int x = 0; x < len; x++){
-//         command->remain[x] = buffer[x];
-//     }
-
-//     secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
-// }
-
-void secure_send(uint8_t * buffer, uint8_t len){
-    secure_send_packet_and_ack(buffer, GLOBAL_KEY);
-    print_info("Secure send in component sent message %s\n", buffer);
+    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
 }
 
 /**

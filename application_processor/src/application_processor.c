@@ -477,8 +477,12 @@ int preboot_validate_component_id(){
         // Success, device is present
         if (len > 0) {
             message* scan = (message*)receive_buffer;
+            uint32_t comp_id = 0;
+            for(int i = 0; i < 4; i++) {
+                comp_id = (comp_id << 8) | scan->comp_ID[i];
+            }
             for(int i = 0; i < flash_status.component_cnt; i++) {
-                if(flash_status.component_ids[i] == scan->comp_ID){
+                if(flash_status.component_ids[i] == comp_id){
                     check += 1;
                     break;
                 }

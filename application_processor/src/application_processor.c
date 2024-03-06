@@ -226,11 +226,11 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len){
     // uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
 
     int len_chlg = secure_send_packet(address, buffer, GLOBAL_KEY);
-    // print_info("secure_send in AP done with challenge send with info: %d and send result: %dfrom address %x\n", buffer, len_chlg, address);
-    if (len_chlg != ERROR_RETURN) {
-        print_success("The AP success to send the buffer during post boot\n");
-        return SUCCESS_RETURN;
-    }
+    print_info("secure_send in AP done with challenge send with info: %d and send result: %dfrom address %x\n", buffer, len_chlg, address);
+    // if (len_chlg == ERROR_RETURN) {
+    //     print_error("The AP failed to send the challenge buffer during post boot\n");
+    //     return ERROR_RETURN;
+    // }
 }
 
 /**
@@ -305,11 +305,11 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len){
 
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
     int len_chlg = secure_poll_and_receive_packet(address, buffer, GLOBAL_KEY);
-    // print_info("secure_receive in AP done with challenge recieve with info: %d and recieve result: %d from address %x\n", buffer, len_chlg, address);
-    if (len_chlg != ERROR_RETURN) {
-        print_success("The AP success to receive the buffer during post boot\n");
-        return SUCCESS_RETURN;
-    }
+    print_info("secure_receive in AP done with challenge recieve with info: %d and recieve result: %d from address %x\n", buffer, len_chlg, address);
+    // if (len_chlg == ERROR_RETURN) {
+    //     print_error("The AP failed to receive the challenge buffer during post boot\n");
+    //     return ERROR_RETURN;
+    // }
 }
 
 /**

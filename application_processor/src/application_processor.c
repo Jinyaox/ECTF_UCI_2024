@@ -304,7 +304,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len){
 // }
 
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
-    int len_chlg = poll_and_receive_packet(address, buffer);
+    int len_chlg = poll_and_receive_packet(address, buffer, GLOBAL_KEY);
     print_info("secure_receive in AP done with challenge recieve with info: %d and recieve result: %d from address %x\n", buffer, len_chlg, address);
     if (len_chlg == ERROR_RETURN) {
         print_error("The AP failed to receive the challenge buffer during post boot\n");

@@ -324,6 +324,17 @@ void boot() {
 // Handle a command from the AP
 void component_process_cmd() {
     memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+    volatile int cnt = 0;
+    for(int i = 0; i < 16; ++i){
+        if(receive_buffer[i] == 'B' && 
+        receive_buffer[i+1] == 'E' && 
+        receive_buffer[i+2] == 'E' && 
+        receive_buffer[i+3] == 'F')
+            cnt++;
+    }
+    if (cnt >= 14){
+        process_scan();
+    }
     secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
     message *command = (message *)receive_buffer;
 

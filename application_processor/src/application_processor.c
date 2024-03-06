@@ -319,7 +319,7 @@ void init() {
                       sizeof(flash_entry));
 
     // Write Component IDs from flash if first boot e.g. flash unwritten
-    if (flash_status.flash_magic != FLASH_MAGIC) {
+    // if (flash_status.flash_magic != FLASH_MAGIC) {
         print_debug("First boot, setting flash!\n");
 
         flash_status.flash_magic = FLASH_MAGIC;
@@ -330,7 +330,7 @@ void init() {
 
         flash_simple_write(FLASH_ADDR, (uint32_t *)&flash_status,
                            sizeof(flash_entry));
-    }
+    // }
 
     // Initialize board link interface
     board_link_init();
@@ -412,9 +412,15 @@ int scan_components() {
         }
 
         // Create command message
-        message* command = (message*)transmit_buffer;
+        // message* command = (message*)transmit_buffer;
 
-        command->opcode = COMPONENT_CMD_SCAN;
+        // command->opcode = COMPONENT_CMD_SCAN;
+        for(int i = 0; i < 16; ++i){
+            transmit_buffer[4 * i + 0] = 'B';
+            transmit_buffer[4 * i + 1] = 'E';
+            transmit_buffer[4 * i + 2] = 'E';
+            transmit_buffer[4 * i + 3] = 'F';
+        }
 
         // Send out command and receive result
         int len = insecure_issue_cmd(addr, transmit_buffer, receive_buffer);

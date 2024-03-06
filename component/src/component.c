@@ -103,6 +103,18 @@ uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
 
 /********************************* UTILITIES **********************************/
+#define print_info(...)                                                        \
+    printf("%%info: ");                                                        \
+    printf(__VA_ARGS__);                                                       \
+    printf("%%");                                                              \
+    fflush(stdout)
+#define print_hex_info(...)                                                    \
+    printf("%%info: ");                                                        \
+    print_hex(__VA_ARGS__);                                                    \
+    printf("%%");                                                              \
+    fflush(stdout)
+
+
 void uint32_to_uint8(uint8_t str_uint8[4], uint32_t str_uint32) {
     for (int i = 0; i < 4; i++)
         str_uint8[i] = (uint8_t)(str_uint32 >> 8 * (3 - i)) & 0xFF;

@@ -227,10 +227,10 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len){
 
     int len_chlg = secure_send_packet(address, buffer, GLOBAL_KEY);
     print_info("secure_send in AP done with challenge send with info: %d and send result: %dfrom address %x\n", buffer, len_chlg, address);
-    // if (len_chlg == ERROR_RETURN) {
-    //     print_error("The AP failed to send the challenge buffer during post boot\n");
-    //     return ERROR_RETURN;
-    // }
+    if (len_chlg == ERROR_RETURN) {
+        print_error("The AP failed to send the challenge buffer during post boot\n");
+        return ERROR_RETURN;
+    }
 }
 
 /**

@@ -214,7 +214,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
         return ERROR_RETURN;
     }
 
-    print_info("Secure Send in AP done with exit: %d\n", len_msg);
+    print_success("Secure Send in AP done\n");
 
     return len_msg;
 }
@@ -289,9 +289,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
 // }
 
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
-    uint8_t result = secure_poll_and_receive_packet(address, buffer, GLOBAL_KEY);
-    print_info("Secure Receive in AP done with exit: %d\n", result);
-    return result;
+    return secure_poll_and_receive_packet(address, buffer, GLOBAL_KEY);
 }
 
 /**

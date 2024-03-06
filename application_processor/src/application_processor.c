@@ -174,7 +174,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
     uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
 
     int len_chlg = secure_send_packet(address, challenge_buffer, GLOBAL_KEY);
-    print_info("secure_send in AP done with challenge send with info: %d and send result: %d\n", challenge_buffer, len_chlg);
+    print_success("secure_send in AP done with challenge send with info: %d and send result: %d\n", challenge_buffer, len_chlg);
     if (len_chlg == ERROR_RETURN) {
         print_error("The AP failed to send the challenge buffer during post boot\n");
         return ERROR_RETURN;
@@ -236,7 +236,7 @@ int secure_receive(i2c_addr_t address, uint8_t* buffer) {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     
     int len_chlg = secure_poll_and_receive_packet(address, challenge_buffer, GLOBAL_KEY);
-    print_info("secure_receive in AP done with challenge recieve with info: %d and recieve result: %d\n", challenge_buffer, len_chlg);
+    print_success("secure_receive in AP done with challenge recieve with info: %d and recieve result: %d\n", challenge_buffer, len_chlg);
     if (len_chlg == ERROR_RETURN) {
         print_error("The AP failed to receive the challenge buffer during post boot\n");
         return ERROR_RETURN;

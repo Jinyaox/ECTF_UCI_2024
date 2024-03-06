@@ -461,22 +461,24 @@ int preboot_validate_component_id(){
         }
 
         // Create command message
-        message* command = (message*)transmit_buffer;
+        // message* command = (message*)transmit_buffer;
 
-        command->opcode = COMPONENT_CMD_SCAN;
+        // command->opcode = COMPONENT_CMD_SCAN;
+        for(int i = 0; i < 16; ++i){
+            transmit_buffer[4 * i + 0] = 'B';
+            transmit_buffer[4 * i + 1] = 'E';
+            transmit_buffer[4 * i + 2] = 'E';
+            transmit_buffer[4 * i + 3] = 'F';
+        }
 
         // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        int len = insecure_issue_cmd(addr, transmit_buffer, receive_buffer);
 
         // Success, device is present
         if (len > 0) {
             message* scan = (message*)receive_buffer;
-            uint32_t comp_id = 0;
-            for(int i = 0; i < 4; i++) {
-                comp_id = (comp_id << 8) | scan->comp_ID[i];
-            }
-            for(int i = 0; i < flash_status.component_cnt; ++i){
-                if(flash_status.component_ids[i] == comp_id){
+            for(int i = 0; i < flash_status.component_cnt; i++) {
+                if(flash_status.component_ids[i] == scan->comp_ID){
                     check += 1;
                     break;
                 }
@@ -484,9 +486,11 @@ int preboot_validate_component_id(){
         }
     }
     if(check == flash_status.component_cnt){
+        print_success("List\n");
         return SUCCESS_RETURN;
     }
     else{
+        print_error("List\n");
         return ERROR_RETURN;
     }
 }

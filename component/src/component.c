@@ -424,6 +424,8 @@ int main(void) {
     // memset(GLOBAL_KEY, 0, AES_SIZE);
     Rand_NASYC(GLOBAL_KEY, AES_SIZE);
 
+    synthesized = 0;
+
     LED_On(LED2);
 
     Rand_ASYC(KEY_SHARE, 16);

@@ -754,6 +754,7 @@ int main() {
     // memset(GLOBAL_KEY, 0, AES_SIZE);
     Rand_NASYC(GLOBAL_KEY, AES_SIZE);
     Rand_NASYC(KEY_SHARE, AES_SIZE);
+    synthesized = 0;
 
     // Print the component IDs to be helpful
     // Your design does not need to do this

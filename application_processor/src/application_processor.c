@@ -363,7 +363,7 @@ int insecure_issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
             return ERROR_RETURN;
     }
-    int result = send_packet(addr, transmit); 
+    int result = send_packet(addr, MAX_I2C_MESSAGE_LEN-1, transmit); 
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }

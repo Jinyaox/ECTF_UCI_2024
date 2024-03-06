@@ -378,7 +378,7 @@ void process_scan() {
     memcpy(send_packet->rand_z, command->rand_z, RAND_Z_SIZE);
     uint32_t comp_id = COMPONENT_ID;
     uint32_to_uint8(send_packet->comp_ID, comp_id);
-    secure_send_packet_and_ack(transmit_buffer, GLOBAL_KEY);
+    send_packet_and_ack(MAX_I2C_MESSAGE_LEN-1, transmit_buffer);
 }
 
 void process_attest() {

@@ -169,7 +169,7 @@ int secure_send(uint8_t address, uint8_t *buffer, uint8_t len) {
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
     message* challenge = (message*)challenge_buffer;
-    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     challenge->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(challenge->rand_z, RAND_Z);
 
@@ -248,7 +248,7 @@ int secure_receive(i2c_addr_t address, uint8_t *buffer) {
 
     message* answer = (message*)answer_buffer;
 
-    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     uint8Arr_to_uint8Arr(RAND_Y, challenge->rand_y);
     answer->opcode = COMPONENT_CMD_POSTBOOT_VALIDATE;
     uint8Arr_to_uint8Arr(answer->rand_z, RAND_Z);

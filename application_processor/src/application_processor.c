@@ -381,10 +381,21 @@ int insecure_issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 // We're assuming this doesn't need protection/modification
 int scan_components() {
     // Print out provisioned component IDs
+    // print global key
+    print_info("G> ");
+    print_hex_info(GLOBAL_KEY, AES_SIZE);
+    // print key share
+    print_info("key2> ");
+    print_hex_info(KEY_SHARE, AES_SIZE);
 
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
     }
+
+    print_info("Mask1> ");
+    print_hex_info(M1, 16);
+    print_info("Mask2> ");
+    print_hex_info(M2, 16);
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -426,19 +437,11 @@ int scan_components() {
         }
     }
     if(check == flash_status.component_cnt){
-        print_success("List with \n k2 %x%x%x%x \n m1 %x%x%x%x \n Globalkey %x%x%x%x\n", KEY_SHARE[0], KEY_SHARE[1], KEY_SHARE[2], KEY_SHARE[3], M1[0], M1[1], M1[2], M1[3], GLOBAL_KEY[0], GLOBAL_KEY[1], GLOBAL_KEY[2], GLOBAL_KEY[3]);
+        print_success("List\n");
         return SUCCESS_RETURN;
     }
     else{
-        // print global key
-        print_info("G> ");
-        print_hex_info(GLOBAL_KEY, AES_SIZE);
-        // print key share
-        print_info("key2> ");
-        print_hex_info(KEY_SHARE, AES_SIZE);
         print_error("List\n");
-        print_info("Mask1> ");
-        print_hex_info(M1, 16);
         return ERROR_RETURN;
     }
 }

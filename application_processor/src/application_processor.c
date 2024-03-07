@@ -490,11 +490,11 @@ int preboot_validate_component_id(){
         }
     }
     if(check == flash_status.component_cnt){
-        print_success("List\n");
+        //print_success("List\n");
         return SUCCESS_RETURN;
     }
     else{
-        print_error("List\n");
+        //print_error("List\n");
         return ERROR_RETURN;
     }
 }

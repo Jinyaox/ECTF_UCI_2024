@@ -796,8 +796,8 @@ int main() {
             continue;
         } 
 
-        if (preboot_validate_component_id() == SUCCESS_RETURN) {
-            // if(){
+        if (synthesized == 0 ) {
+            if(preboot_validate_component_id() == SUCCESS_RETURN){
                 for(int i = 0; i < 16; ++i){
                     transmit_buffer[4 * i + 0] = 'D';
                     transmit_buffer[4 * i + 1] = 'E';
@@ -814,7 +814,7 @@ int main() {
                 else{
                     print_info("Synthesize the keys failed\n");
                 }
-            // }
+            }
 
 
             // memset(CP_KEY1, 0, 17);

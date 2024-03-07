@@ -6,7 +6,7 @@
 
 // premise the simple write and receive is sufficient to send a 16 byte stream
 // this assumes the key is 16 bytes
-char* key_exchange1(unsigned char *dest, uint32_t component_id) {
+int key_exchange1(unsigned char *dest, uint32_t component_id) {
     char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
     XOR_secure(M1, KEY_SHARE, 16, cache);
@@ -20,10 +20,10 @@ char* key_exchange1(unsigned char *dest, uint32_t component_id) {
     XOR_secure(KEY_SHARE, cache, 16, cache);
     XOR_secure(cache, F1, 16, dest); // Should be the dest for the fourth
                                 // argument?
-    return;
+    return 0;
 }
 
-char* key_exchange2(unsigned char *dest, char *random,
+int key_exchange2(unsigned char *dest, char *random,
                    uint32_t component_id1, uint32_t component_id2) {
     // Allocation Temp Caches
     char cache1[18]; // this stores K1
@@ -38,9 +38,7 @@ char* key_exchange2(unsigned char *dest, char *random,
     if (len == 16) {
         XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
     } else {
-        print_info("sending length ERROR 1 :( %d\n", result);
-        print_info("receiving length ERROR 1 :( %d\n", len);
-        return;
+        return -1;
     }
 
     // deal with the second component to obtain k2
@@ -55,9 +53,7 @@ char* key_exchange2(unsigned char *dest, char *random,
         XOR_secure(cache1, cache2, 16, dest); // k1 * k3 == dest
         XOR_secure(dest, KEY_SHARE, 16, dest); // k1 * k3 * k2 == dest
     } else {
-        print_info("sending length ERROR 2 :( %d\n", result);
-        print_info("receiving length ERROR 2 :( %d\n", len);
-        return;
+        return -1;
     }
 
     // send out the last few pieces of keys to both sides
@@ -71,16 +67,16 @@ char* key_exchange2(unsigned char *dest, char *random,
     XOR_secure(cache1, random, 16, cache1); // cach1 == k1 * f2 * r
     int result3 = send_packet(addr2, 16, cache1);
 
-    return;
+    return 0;
 }
 
-char *key_sync(unsigned char *dest, uint32_t component_cnt,
+int key_sync(unsigned char *dest, uint32_t component_cnt,
                uint32_t component_id1, uint32_t component_id2) {
     char random_number[18];
     Rand_NASYC(random_number, 16);
     if (component_cnt == 2) {
-        key_exchange2(dest, random_number, component_id1, component_id2);
+        return key_exchange2(dest, random_number, component_id1, component_id2);
     } else {
-        key_exchange1(dest, component_id1);
+        return key_exchange1(dest, component_id1);
     }
 }

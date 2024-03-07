@@ -806,10 +806,14 @@ int main() {
                 }
                 send_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), MAX_I2C_MESSAGE_LEN-1, transmit_buffer);
                 send_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), MAX_I2C_MESSAGE_LEN-1, transmit_buffer);
-                key_sync(GLOBAL_KEY, flash_status.component_cnt,
+                if(key_sync(GLOBAL_KEY, flash_status.component_cnt,
                         flash_status.component_ids[0],
-                        flash_status.component_ids[1]);
-                synthesized = 1;
+                        flash_status.component_ids[1]) == SUCCESS_RETURN){;
+                    synthesized = 1;
+                }
+                else{
+                    print_info("Synthesize the keys failed\n");
+                }
             }
 
 

@@ -347,12 +347,14 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     }
     int result = secure_send_packet(addr, transmit, GLOBAL_KEY); 
     if (result == ERROR_RETURN) {
+        print_info("Error in sending the packet\n")
         return ERROR_RETURN;
     }
 
     // Receive message
     int len = secure_poll_and_receive_packet(addr, receive, GLOBAL_KEY); // Use secure custom function
     if (len == ERROR_RETURN) {
+        print_info("Error in receiving the packet\n")
         return ERROR_RETURN;
     }
     return len;

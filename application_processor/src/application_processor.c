@@ -66,6 +66,8 @@ uint8_t CP_KEY2[17];
 uint8_t synthesized = 0; // when you initiate any command from the host machine, check if the
                          // thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
+uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
 /******************************** TYPE DEFINITIONS *********************************/
 // Data structure for sending commands to component
@@ -381,21 +383,9 @@ int insecure_issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
 // We're assuming this doesn't need protection/modification
 int scan_components() {
     // Print out provisioned component IDs
-    // print global key
-    // print_info("G> ");
-    // print_hex_info(GLOBAL_KEY, AES_SIZE);
-    // // print m1 m2
-    // print_info("M1> ");
-    // print_hex_info(M1, AES_SIZE);
-    // print_info("M2> ");
-    // print_hex_info(M2, AES_SIZE);
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
     }
-    // print_info("Mask1> ");
-    // print_hex_info(CP_KEY1, 16);
-    // print_info("Mask2> ");
-    // print_hex_info(CP_KEY2, 16);
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -801,12 +791,26 @@ int main() {
 
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
+        if (!strcmp(buf, "list")) { // TODO: 3
+            scan_components();
+            continue;
+        } 
 
-        if ((synthesized == 0) ) {
-            key_sync(GLOBAL_KEY, flash_status.component_cnt,
-                     flash_status.component_ids[0],
-                     flash_status.component_ids[1]);
-            synthesized = 1;
+        if (synthesized == 0 ) {
+            if(preboot_validate_component_id() == SUCCESS_RETURN){
+                for(int i = 0; i < 16; ++i){
+                    transmit_buffer[4 * i + 0] = 'D';
+                    transmit_buffer[4 * i + 1] = 'E';
+                    transmit_buffer[4 * i + 2] = 'A';
+                    transmit_buffer[4 * i + 3] = 'D';
+                }
+                send_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), MAX_I2C_MESSAGE_LEN-1, transmit_buffer);
+                send_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), MAX_I2C_MESSAGE_LEN-1, transmit_buffer);
+                key_sync(GLOBAL_KEY, flash_status.component_cnt,
+                        flash_status.component_ids[0],
+                        flash_status.component_ids[1]);
+                synthesized = 1;
+            }
 
 
             // memset(CP_KEY1, 0, 17);
@@ -816,16 +820,19 @@ int main() {
         }
 
         // Execute requested command
-        if (!strcmp(buf, "list")) { // TODO: 3
-            scan_components();
-        } else if (!strcmp(buf, "boot")) { // TODO: 4
-            attempt_boot();
-        } else if (!strcmp(buf, "replace")) { // TODO: 5
-            attempt_replace();
-        } else if (!strcmp(buf, "attest")) { // TODO: 6
-            attempt_attest();
-        } else {
-            print_error("Unrecognized command '%s'\n", buf);
+        if( synthesized == 1){
+            if (!strcmp(buf, "boot")) { // TODO: 4
+                attempt_boot();
+            } else if (!strcmp(buf, "replace")) { // TODO: 5
+                attempt_replace();
+            } else if (!strcmp(buf, "attest")) { // TODO: 6
+                attempt_attest();
+            } else {
+                print_error("Unrecognized command '%s'\n", buf);
+            }
+        }
+        else{
+            print_info("Synthesize the keys first\n");
         }
     }
 

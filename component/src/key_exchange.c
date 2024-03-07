@@ -11,7 +11,7 @@ uint8_t receive_buffer1[MAX_I2C_MESSAGE_LEN];
 
 
 
-void sync2(char* dest, char* k2_r){
+uint8_t sync2(char* dest, char* k2_r){
     char cash_k2_r[18];
     XOR_secure(k2_r,KEY_SHARE,16,cash_k2_r); //k2_r_k1
 
@@ -22,9 +22,9 @@ void sync2(char* dest, char* k2_r){
     if(len==16){
         XOR_secure(cash_k2_r, k2_r, 16, dest);
         XOR_secure(dest, FINAL_MASK, 16, dest);
-        return;
+        return len;
     }else{
-        return;
+        return -1;
     }
 
 }
@@ -42,26 +42,25 @@ void sync1(char* dest, char* k2_m1){
     return;
 }
 
-void key_sync(char* dest){
+uint8_t key_sync(char* dest){
     uint8_t len=wait_and_receive_packet(receive_buffer1);
     if(len!=18){
         //we have an error so just return
-        return;
+        return -1;
     }
     char rv = receive_buffer1[17];
     switch (rv)
     {
     case '1':
         sync1(dest,receive_buffer1);
-        break;
+        return len;
     
     case '2':
-        sync2(dest,receive_buffer1);
-        break;
+        return sync2(dest,receive_buffer1);
 
     default:
         //default should never be invoked
-        return;
+        return -1;
     }
 
 }

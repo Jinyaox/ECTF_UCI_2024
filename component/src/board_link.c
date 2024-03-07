@@ -124,16 +124,23 @@ void secure_send_packet_and_ack(uint8_t* packet, uint8_t* GLOBAL_KEY) {
 uint8_t secure_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY) {
     uint8_t plaintext[MAX_I2C_MESSAGE_LEN];
     uint8_t len = wait_and_receive_packet(packet);
-    volatile int cnt = 0;
+    volatile int lst_cnt = 0;
+    volatile int sync_cnt = 0;
     for(int i = 0; i < 16; ++i){
-        if(packet[i*4] == 'B' && 
-        packet[i*4+1] == 'E' && 
-        packet[i*4+2] == 'E' && 
-        packet[i*4+3] == 'F')
-            cnt++;
+        if(packet[i*4] == 'B' && packet[i*4+1] == 'E' && packet[i*4+2] == 'E' && packet[i*4+3] == 'F'){
+            lst_cnt++;
+        }
+        if(packet[i*4] == 'D' && packet[i*4+1] == 'E' && packet[i*4+2] == 'A' && packet[i*4+3] == 'D'){
+            sync_cnt++;
+        }
     }
-    if (cnt >= 14){
-        process_scan();
+    if (lst_cnt == 16){
+        // process_scan();
+        return 1;
+    }
+    else if(sync_cnt == 16){
+        // process_sync();
+        return 2;
     }
     decrypt_sym(packet, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, plaintext);
     memmove(packet, plaintext, MAX_I2C_MESSAGE_LEN);

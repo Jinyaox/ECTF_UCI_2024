@@ -324,7 +324,21 @@ void boot() {
 // Handle a command from the AP
 void component_process_cmd() {
     memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
-    secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+    uint8_t operation =  secure_wait_and_receive_packet(receive_buffer, GLOBAL_KEY);
+    if(operation == 1){
+        process_scan();
+        return;
+    }
+    else if(operation == 2 && synthesized == 0){
+        if(key_sync(GLOBAL_KEY) != -1){
+            synthesized = 1;
+        }
+        return;
+    }
+    else if(synthesized == 0){
+        printf("Key sync failed");
+        return;
+    }
     message *command = (message *)receive_buffer;
 
     // Output to application processor dependent on command received
@@ -332,9 +346,9 @@ void component_process_cmd() {
     case COMPONENT_CMD_VALIDATE:
         process_boot();
         break;
-    case COMPONENT_CMD_SCAN:
-        process_scan();
-        break;
+    // case COMPONENT_CMD_SCAN:
+    //     process_scan();
+    //     break;
     case COMPONENT_CMD_ATTEST:
         process_attest();
         break;
@@ -423,21 +437,19 @@ int main(void) {
     board_link_init(addr);
     // memset(GLOBAL_KEY, 0, AES_SIZE);
     Rand_NASYC(GLOBAL_KEY, AES_SIZE);
-
+    Rand_NASYC(KEY_SHARE, AES_SIZE);
     synthesized = 0;
 
     LED_On(LED2);
 
-    Rand_NASYC(KEY_SHARE, 16);
-
     while (1) {
-        if (synthesized == 0) {
+        // if (synthesized == 0) {
 
-            key_sync(GLOBAL_KEY);
-            synthesized = 1;
-            // send_packet_and_ack(16, MASK);
-            // send_packet_and_ack(16, FINAL_MASK);
-        }
+        //     key_sync(GLOBAL_KEY);
+        //     synthesized = 1;
+        //     // send_packet_and_ack(16, MASK);
+        //     // send_packet_and_ack(16, FINAL_MASK);
+        // }
         component_process_cmd();
     }
 }

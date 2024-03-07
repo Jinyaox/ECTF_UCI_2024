@@ -426,7 +426,7 @@ int scan_components() {
         }
     }
     if(check == flash_status.component_cnt){
-        print_success("List with \n k2 %x%x%x%x \n m1 %x%x%x%x \n Globalkey %x%x%x%x\n", KEY_SHARE[0], KEY_SHARE[1], KEY_SHARE[2], KEY_SHARE[3], M1[0], M1[1], M1[2], M1[3], GLOBAL_KEY[0], GLOBAL_KEY[1], GLOBAL_KEY[2], GLOBAL_KEY[3]);
+        print_success("List\n");
         return SUCCESS_RETURN;
     }
     else{
@@ -436,9 +436,9 @@ int scan_components() {
         // print key share
         print_info("key2> ");
         print_hex_info(KEY_SHARE, AES_SIZE);
-        print_error("List\n");
         print_info("Mask1> ");
         print_hex_info(M1, 16);
+        print_error("List\n");
         return ERROR_RETURN;
     }
 }
@@ -781,9 +781,10 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    // memset(GLOBAL_KEY, 0, AES_SIZE);
-    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
-    Rand_NASYC(KEY_SHARE, AES_SIZE);
+    memset(GLOBAL_KEY, 0, AES_SIZE);
+    memset(KEY_SHARE, 0, AES_SIZE);
+    // Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+    // Rand_NASYC(KEY_SHARE, AES_SIZE);
     synthesized = 0;
 
     // Print the component IDs to be helpful

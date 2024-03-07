@@ -345,14 +345,13 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
             return ERROR_RETURN;
     }
-    int result = secure_send_packet(addr, transmit,GLOBAL_KEY); 
+    int result = secure_send_packet(addr, transmit, GLOBAL_KEY); 
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
     // Receive message
-    int len = secure_poll_and_receive_packet(
-        addr, receive, GLOBAL_KEY); // Use secure custom function
+    int len = secure_poll_and_receive_packet(addr, receive, GLOBAL_KEY); // Use secure custom function
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -523,7 +522,8 @@ int validate_and_boot_components() {
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
-            print_error("Could not validate or boot component:%d\n",i+1);
+            // print_error("Could not validate or boot component:%d\n",i+1);
+            print_info("Could not validate or boot component:%08x\n",flash_status.component_ids[i]);
             // continue;
            return ERROR_RETURN;
         }
@@ -789,6 +789,11 @@ int main() {
         memset(buf, 0, 100);
         recv_input("Enter Command: ", buf);
 
+        if (!strcmp(buf, "list")) { // TODO: 3
+            scan_components();
+            continue;
+        } 
+
         if (synthesized == 0 ) {
             if(preboot_validate_component_id() == SUCCESS_RETURN){
                 for(int i = 0; i < 16; ++i){
@@ -814,10 +819,6 @@ int main() {
 
         // Shouldn't the merging happen here?
         //&& (strlen(buf) != 0
-        if (!strcmp(buf, "list")) { // TODO: 3
-            scan_components();
-            continue;
-        } 
 
         // Execute requested command
         if( synthesized == 1){

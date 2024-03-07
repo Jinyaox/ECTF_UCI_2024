@@ -319,7 +319,7 @@ void init() {
                       sizeof(flash_entry));
 
     // Write Component IDs from flash if first boot e.g. flash unwritten
-    // if (flash_status.flash_magic != FLASH_MAGIC) {
+    if (flash_status.flash_magic != FLASH_MAGIC) {
         print_debug("First boot, setting flash!\n");
 
         flash_status.flash_magic = FLASH_MAGIC;
@@ -330,7 +330,7 @@ void init() {
 
         flash_simple_write(FLASH_ADDR, (uint32_t *)&flash_status,
                            sizeof(flash_entry));
-    // }
+    }
 
     // Initialize board link interface
     board_link_init();

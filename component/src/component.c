@@ -329,7 +329,7 @@ void component_process_cmd() {
         process_scan();
         return;
     }
-    else if(operation == 2){
+    else if(operation == 2 && synthesized == 0){
         if(key_sync(GLOBAL_KEY) != -1){
             synthesized = 1;
         }

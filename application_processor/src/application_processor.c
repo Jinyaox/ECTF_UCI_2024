@@ -793,7 +793,7 @@ int main() {
         //&& (strlen(buf) != 0
         if (!strcmp(buf, "list")) { // TODO: 3
             scan_components();
-            continue;
+            // continue;
         } 
 
         if (synthesized == 0 ) {
@@ -831,9 +831,9 @@ int main() {
                 print_error("Unrecognized command '%s'\n", buf);
             }
         }
-        else{
-            print_info("Synthesize the keys first\n");
-        }
+        // else{
+        //     print_info("Synthesize the keys first\n");
+        // }
     }
 
     // Code never reaches here

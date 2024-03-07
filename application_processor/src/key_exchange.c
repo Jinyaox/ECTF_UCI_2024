@@ -38,7 +38,8 @@ char* key_exchange2(unsigned char *dest, char *random,
     if (len == 16) {
         XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
     } else {
-        //print_info("receiving length ERROR 1 :( \n");
+        print_info("sending length ERROR 1 :( %d\n", result);
+        print_info("receiving length ERROR 1 :( %d\n", len);
         return;
     }
 
@@ -54,7 +55,8 @@ char* key_exchange2(unsigned char *dest, char *random,
         XOR_secure(cache1, cache2, 16, dest); // k1 * k3 == dest
         XOR_secure(dest, KEY_SHARE, 16, dest); // k1 * k3 * k2 == dest
     } else {
-        //print_info("receiving length ERROR 2 :( \n");
+        print_info("sending length ERROR 2 :( %d\n", result);
+        print_info("receiving length ERROR 2 :( %d\n", len);
         return;
     }
 

@@ -789,13 +789,6 @@ int main() {
         memset(buf, 0, 100);
         recv_input("Enter Command: ", buf);
 
-        // Shouldn't the merging happen here?
-        //&& (strlen(buf) != 0
-        if (!strcmp(buf, "list")) { // TODO: 3
-            scan_components();
-            // continue;
-        } 
-
         if (synthesized == 0 ) {
             if(preboot_validate_component_id() == SUCCESS_RETURN){
                 for(int i = 0; i < 16; ++i){
@@ -819,6 +812,13 @@ int main() {
             // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
         }
 
+        // Shouldn't the merging happen here?
+        //&& (strlen(buf) != 0
+        if (!strcmp(buf, "list")) { // TODO: 3
+            scan_components();
+            continue;
+        } 
+
         // Execute requested command
         if( synthesized == 1){
             if (!strcmp(buf, "boot")) { // TODO: 4
@@ -831,9 +831,9 @@ int main() {
                 print_error("Unrecognized command '%s'\n", buf);
             }
         }
-        // else{
-        //     print_info("Synthesize the keys first\n");
-        // }
+        else{
+            print_info("Synthesize the keys first\n");
+        }
     }
 
     // Code never reaches here

@@ -787,7 +787,6 @@ int main() {
     // memset(GLOBAL_KEY, 0, AES_SIZE);
     Rand_NASYC(GLOBAL_KEY, AES_SIZE);
     Rand_NASYC(KEY_SHARE, AES_SIZE);
-    print_info("Reinitialized key share as %x%x%x%x\n", KEY_SHARE[0], KEY_SHARE[1], KEY_SHARE[2], KEY_SHARE[3]);
     synthesized = 0;
 
     // Print the component IDs to be helpful

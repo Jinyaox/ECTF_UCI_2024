@@ -126,10 +126,10 @@ uint8_t secure_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY) {
     uint8_t len = wait_and_receive_packet(packet);
     volatile int cnt = 0;
     for(int i = 0; i < 16; ++i){
-        if(packet[i] == 'B' && 
-        packet[i+1] == 'E' && 
-        packet[i+2] == 'E' && 
-        packet[i+3] == 'F')
+        if(packet[i*4] == 'B' && 
+        packet[i*4+1] == 'E' && 
+        packet[i*4+2] == 'E' && 
+        packet[i*4+3] == 'F')
             cnt++;
     }
     if (cnt >= 14){

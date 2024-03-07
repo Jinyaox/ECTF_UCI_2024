@@ -29,6 +29,12 @@ def change_byte_to_const(byte_stream, name)->str:
     return macro_string
 
 
+def change_byte_to_noconst(byte_stream, name)->str:
+    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
+    macro_string = f"uint8_t {name}[16] = {{ {hex_representation} }};"
+    return macro_string
+
+
 # ------------------------------ this is for file Writing and modification --------------------------------------
 
 
@@ -216,7 +222,7 @@ def write_key_to_files():
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
-    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern uint8_t KEY_SHARE[16];\n")
     fh.write("extern const uint8_t M1[16];\n")
     fh.write("extern const uint8_t F1[16];\n")
     fh.write("extern const uint8_t M2[16];\n")
@@ -225,7 +231,7 @@ def write_key_to_files():
     fh.close()
     fh = open("./src/key.c", "w")
     fh.write("#include \"key.h\" \n")
-    fh.write(change_byte_to_const(k2,"KEY_SHARE")+"\n")
+    fh.write(change_byte_to_noconst(k2,"KEY_SHARE")+"\n")
     if len(indexs) == 1:
         fh.write(mask[0].replace("MASK", "M1") + "\n")
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")

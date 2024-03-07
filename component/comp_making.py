@@ -128,6 +128,11 @@ def change_byte_to_const(byte_stream, name)->str:
     macro_string = f"const uint8_t {name}[16] = {{ {hex_representation} }};"
     return macro_string
 
+def change_byte_to_noconst(byte_stream, name)->str:
+    hex_representation = ', '.join([f'0x{byte:02X}' for byte in byte_stream])
+    macro_string = f"uint8_t {name}[16] = {{ {hex_representation} }};"
+    return macro_string
+
 def get_secret_key_from_csv(filename, row):
     # Read the secret key from the CSV file
     with open(filename, 'r') as csvfile:
@@ -161,14 +166,14 @@ def write_key_to_files(index)->None:
     fh.write("#ifndef __KEY__\n")
     fh.write("#define __KEY__\n")
     fh.write("#include <stdint.h> \n")
-    fh.write("extern const uint8_t KEY_SHARE[16];\n")
+    fh.write("extern uint8_t KEY_SHARE[16];\n")
     fh.write("extern const uint8_t MASK[16];\n")
     fh.write("extern const uint8_t FINAL_MASK[16];\n")
     fh.write("#endif\n")
     fh.close()
     fh = open("src/key.c", "w")
     fh.write("#include \"key.h\" \n")
-    fh.write(change_byte_to_const(key_share,"KEY_SHARE"))
+    fh.write(change_byte_to_noconst(key_share,"KEY_SHARE"))
     fh.write('\n')
     fh.write(mask)
     fh.write('\n')

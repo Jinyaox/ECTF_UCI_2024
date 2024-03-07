@@ -428,7 +428,7 @@ int main(void) {
 
     LED_On(LED2);
 
-    Rand_ASYC(KEY_SHARE, 16);
+    Rand_NASYC(KEY_SHARE, 16);
 
     while (1) {
         if (synthesized == 0) {

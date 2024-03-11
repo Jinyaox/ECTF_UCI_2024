@@ -194,7 +194,6 @@ def get_nums():
             #just create the file
             pass
         return 1
-
     with open(file_path, "r+") as f:
         lines = f.readlines()
         num = -1
@@ -202,7 +201,7 @@ def get_nums():
             num = int(lines[-1].split()[1])
             #print(num)
         num+=1
-        ret = str(hex(int(macro_information['ids']))) + " " + str(num) + "\n"
+        ret = str(hex(macro_information['ids'])) + "\n"
         #print(ret)
         f.write(ret)
     return num
@@ -226,6 +225,7 @@ if __name__ == "__main__":
     extract_info()
     #print(macro_information)
     #Read_files()
+    get_nums()
 
     index = component_id_to_i2c_addr(macro_information['ids'])
     #print(index)

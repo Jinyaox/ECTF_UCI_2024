@@ -135,6 +135,14 @@ def file_exist(file_path)->bool:
         return True
     else:
         return False
+    
+def get_nums():
+    file_path = Path("../comp_count.txt")
+    if file_exist(file_path):
+        fh = open(file_path, "r")
+        lines = fh.readlines()
+        fh.close()
+        return lines
 
 
 def read_key_from_files(file_paths: list) -> None:
@@ -227,6 +235,7 @@ def write_key_to_files():
     fh.write("extern const uint8_t F1[16];\n")
     fh.write("extern const uint8_t M2[16];\n")
     fh.write("extern const uint8_t F2[16];\n")
+    fh.write("extern int component_count;\n")
     fh.write("#endif\n")
     fh.close()
     fh = open("./src/key.c", "w")
@@ -242,6 +251,7 @@ def write_key_to_files():
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
         fh.write(mask[1].replace("MASK", "M2") + "\n")
         fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
+    fh.write(f"int component_count = {len(get_nums)};\n")
     fh.close()
     
 
@@ -254,6 +264,7 @@ def write_key_to_files():
 if __name__ == "__main__":
     # this is for test running
     extract_info()
+    #print(get_nums())
     # str = str(macro_information) + " "+ str(component_id_to_i2c_addr(int(macro_information["ids"][0], 16))) + " " + str(component_id_to_i2c_addr(int(macro_information["ids"][1], 16)))
     # sys.stderr.write(str)
     #read_key_from_files(get_file_paths())

@@ -201,7 +201,7 @@ def get_nums():
             num = int(lines[-1].split()[1])
             #print(num)
         num+=1
-        ret = str(hex(macro_information['ids'])) + "\n"
+        ret = str(macro_information['ids']) + "\n"
         #print(ret)
         f.write(ret)
     return num

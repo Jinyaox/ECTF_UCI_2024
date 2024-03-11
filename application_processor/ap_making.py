@@ -235,7 +235,7 @@ def write_key_to_files():
     fh.write("extern const uint8_t F1[16];\n")
     fh.write("extern const uint8_t M2[16];\n")
     fh.write("extern const uint8_t F2[16];\n")
-    fh.write("extern int component_countt;\n")
+    fh.write("extern int component_count;\n")
     fh.write("#endif\n")
     fh.close()
     fh = open("./src/key.c", "w")
@@ -251,7 +251,7 @@ def write_key_to_files():
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
         fh.write(mask[1].replace("MASK", "M2") + "\n")
         fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
-    fh.write(f"int component_countt = {len(get_nums)};\n")
+    fh.write(f"int component_count = {len(get_nums)};\n")
     fh.close()
     
 

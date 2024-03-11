@@ -231,4 +231,4 @@ if __name__ == "__main__":
     #print(index)
     # using exception to print out the error message
     #sys.stderr.write(str)
-    write_key_to_files(index)
+    write_key_to_files(69)

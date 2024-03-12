@@ -698,6 +698,7 @@ int validate_token() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid Token!\n");
+    MXC_Delay(MXC_DELAY_MSEC(5000));
     return ERROR_RETURN;
 }
 
@@ -747,7 +748,7 @@ void attempt_replace() {
                         component_id_in);
             print_success("Replace\n");
             return;
-        }
+        }       
     }
 
     // Component Out was not found

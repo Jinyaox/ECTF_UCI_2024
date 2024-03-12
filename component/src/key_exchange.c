@@ -24,6 +24,7 @@ uint8_t sync2(char* dest, char* k2_r){
         XOR_secure(dest, FINAL_MASK, 16, dest);
         return len;
     }else{
+        Rand_NASYC(dest, AES_SIZE);
         return -1;
     }
 

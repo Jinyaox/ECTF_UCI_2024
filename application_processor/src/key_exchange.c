@@ -13,9 +13,15 @@ int key_exchange1(unsigned char *dest, uint32_t component_id) {
     cache[17] = '1';
 
     int return_status = send_packet(addr, 18, cache);
+    if(return_status < 0) {
+        return -1;
+    }
     
     memset(cache, 0, 18);
     int len = poll_and_receive_packet(addr, cache);
+    if(len != 16){
+        return -1;
+    }
     
     XOR_secure(KEY_SHARE, cache, 16, cache);
     XOR_secure(cache, F1, 16, dest); // Should be the dest for the fourth

@@ -814,6 +814,7 @@ int main() {
                     synthesized = 1;
                 }
                 else{
+                    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
                     print_info("Synthesize the keys failed\n");
                 }
             }

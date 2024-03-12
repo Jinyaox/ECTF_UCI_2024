@@ -40,6 +40,9 @@ int key_exchange2(unsigned char *dest, char *random1, char *random2,
     XOR_secure(random1, KEY_SHARE, 16, cache1);
     cache1[17] = '2';
     int result = send_packet(addr, 18, cache1);
+    if(result < 0) {
+        return -1;
+    }
     int len = poll_and_receive_packet(addr, cache1); 
     if (len == 16) {
         XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
@@ -53,6 +56,9 @@ int key_exchange2(unsigned char *dest, char *random1, char *random2,
     cache2[17] = '2';
 
     int return_status = send_packet(addr2, 18, cache2);
+    if(return_status < 0) {
+        return -1;
+    }
     int len2 = poll_and_receive_packet(addr2, cache2);
     if (len2 == 16) {
         XOR_secure(M1, cache2, 16, cache2); // k3 == cach2

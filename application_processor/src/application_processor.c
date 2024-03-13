@@ -669,6 +669,7 @@ void boot() {
 // Compare the entered PIN to the correct PIN
 int validate_pin() {
     char buf[128];
+    memset(buf, 0, 128);
     recv_input("Enter pin: ", buf);
     if (!strncmp(buf, AP_PIN, 6)) {
         print_debug("Pin Accepted!\n");
@@ -682,6 +683,7 @@ int validate_pin() {
 // Function to validate the replacement token
 int validate_token() {
     char buf[128];
+    memset(buf, 0, 128);
     recv_input("Enter token: ", buf);
     if (!strncmp(buf, AP_TOKEN, 16)) {
         print_debug("Token Accepted!\n");
@@ -718,9 +720,10 @@ void attempt_replace() {
 
     uint32_t component_id_in = 0;
     uint32_t component_id_out = 0;
-
+    memset(buf, 0, 128);
     recv_input("Component ID In: ", buf);
     sscanf(buf, "%x", &component_id_in);
+    memset(buf, 0, 128);
     recv_input("Component ID Out: ", buf);
     sscanf(buf, "%x", &component_id_out);
 
@@ -754,6 +757,7 @@ void attempt_attest() {
         return;
     }
     uint32_t component_id;
+    memset(buf, 0, 128);
     recv_input("Component ID: ", buf);
     sscanf(buf, "%x", &component_id);
     if (attest_component(component_id) == SUCCESS_RETURN) {

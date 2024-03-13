@@ -135,14 +135,6 @@ def file_exist(file_path)->bool:
         return True
     else:
         return False
-    
-def get_nums():
-    file_path = Path("../comp_count.txt")
-    if file_exist(file_path):
-        fh = open(file_path, "r")
-        lines = fh.readlines()
-        fh.close()
-        return lines
 
 
 def read_key_from_files(file_paths: list) -> None:
@@ -219,8 +211,8 @@ def write_key_to_files():
     final = []
     if file_exist(Path(f"../deployment/cc.csv")):
         for i in indexs:
-            mask.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), int(i)*2))
-            final.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), int(i)*2+1))
+            mask.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 69*2))
+            final.append(get_secret_key_from_csv(Path(f"../deployment/cc.csv"), 69*2+1))
     else:
         print("No file found")
         print("error")
@@ -233,9 +225,8 @@ def write_key_to_files():
     fh.write("extern uint8_t KEY_SHARE[16];\n")
     fh.write("extern const uint8_t M1[16];\n")
     fh.write("extern const uint8_t F1[16];\n")
-    fh.write("extern const uint8_t M2[16];\n")
-    fh.write("extern const uint8_t F2[16];\n")
-    fh.write("extern int component_countt;\n")
+    # fh.write("extern const uint8_t M2[16];\n")
+    # fh.write("extern const uint8_t F2[16];\n")
     fh.write("#endif\n")
     fh.close()
     fh = open("./src/key.c", "w")
@@ -244,14 +235,13 @@ def write_key_to_files():
     if len(indexs) == 1:
         fh.write(mask[0].replace("MASK", "M1") + "\n")
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
-        fh.write(change_byte_to_const(secrets.token_bytes(16),"M2")+"\n")
-        fh.write(change_byte_to_const(secrets.token_bytes(16),"F2")+"\n")
+        # fh.write(change_byte_to_const(secrets.token_bytes(16),"M2")+"\n")
+        # fh.write(change_byte_to_const(secrets.token_bytes(16),"F2")+"\n")
     else:
         fh.write(mask[0].replace("MASK", "M1") + "\n")
         fh.write(final[0].replace("FINAL_MASK", "F1") + "\n")
-        fh.write(mask[1].replace("MASK", "M2") + "\n")
-        fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
-    fh.write(f"int component_countt = {len(get_nums)};\n")
+        # fh.write(mask[1].replace("MASK", "M2") + "\n")
+        # fh.write(final[1].replace("FINAL_MASK", "F2")+"\n")
     fh.close()
     
 
@@ -264,7 +254,6 @@ def write_key_to_files():
 if __name__ == "__main__":
     # this is for test running
     extract_info()
-    #print(get_nums())
     # str = str(macro_information) + " "+ str(component_id_to_i2c_addr(int(macro_information["ids"][0], 16))) + " " + str(component_id_to_i2c_addr(int(macro_information["ids"][1], 16)))
     # sys.stderr.write(str)
     #read_key_from_files(get_file_paths())

@@ -386,8 +386,7 @@ int scan_components() {
     // Print out provisioned component IDs
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
-        print_info("component_cnt: %d\n", component_countt);
-        }
+    }
 
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -687,6 +686,7 @@ int validate_pin() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid PIN!\n");
+    MXC_Delay(MXC_DELAY_MSEC(5000));
     return ERROR_RETURN;
 }
 
@@ -699,6 +699,7 @@ int validate_token() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid Token!\n");
+    MXC_Delay(MXC_DELAY_MSEC(5000));
     return ERROR_RETURN;
 }
 
@@ -748,7 +749,7 @@ void attempt_replace() {
                         component_id_in);
             print_success("Replace\n");
             return;
-        }
+        }       
     }
 
     // Component Out was not found
@@ -813,6 +814,8 @@ int main() {
                     synthesized = 1;
                 }
                 else{
+                    Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+                    Rand_NASYC(KEY_SHARE, AES_SIZE);
                     print_info("Synthesize the keys failed\n");
                 }
             }

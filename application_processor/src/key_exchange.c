@@ -13,9 +13,15 @@ int key_exchange1(unsigned char *dest, uint32_t component_id) {
     cache[17] = '1';
 
     int return_status = send_packet(addr, 18, cache);
+    if(return_status < 0) {
+        return -1;
+    }
     
     memset(cache, 0, 18);
     int len = poll_and_receive_packet(addr, cache);
+    if(len != 16){
+        return -1;
+    }
     
     XOR_secure(KEY_SHARE, cache, 16, cache);
     XOR_secure(cache, F1, 16, dest); // Should be the dest for the fourth
@@ -23,7 +29,7 @@ int key_exchange1(unsigned char *dest, uint32_t component_id) {
     return 0;
 }
 
-int key_exchange2(unsigned char *dest, char *random,
+int key_exchange2(unsigned char *dest, char *random1, char *random2,
                    uint32_t component_id1, uint32_t component_id2) {
     // Allocation Temp Caches
     char cache1[18]; // this stores K1
@@ -31,9 +37,12 @@ int key_exchange2(unsigned char *dest, char *random,
 
     // deal with the first component to obtain k1
     i2c_addr_t addr = component_id_to_i2c_addr(component_id1);
-    XOR_secure(random, KEY_SHARE, 16, cache1);
+    XOR_secure(random1, KEY_SHARE, 16, cache1);
     cache1[17] = '2';
     int result = send_packet(addr, 18, cache1);
+    if(result < 0) {
+        return -1;
+    }
     int len = poll_and_receive_packet(addr, cache1); 
     if (len == 16) {
         XOR_secure(M1, cache1, 16, cache1); // k1 == cach1
@@ -43,13 +52,16 @@ int key_exchange2(unsigned char *dest, char *random,
 
     // deal with the second component to obtain k2
     i2c_addr_t addr2 = component_id_to_i2c_addr(component_id2);
-    XOR_secure(random, KEY_SHARE, 16, cache2);
+    XOR_secure(random2, KEY_SHARE, 16, cache2);
     cache2[17] = '2';
 
     int return_status = send_packet(addr2, 18, cache2);
+    if(return_status < 0) {
+        return -1;
+    }
     int len2 = poll_and_receive_packet(addr2, cache2);
     if (len2 == 16) {
-        XOR_secure(M2, cache2, 16, cache2); // k3 == cach2
+        XOR_secure(M1, cache2, 16, cache2); // k3 == cach2
         XOR_secure(cache1, cache2, 16, dest); // k1 * k3 == dest
         XOR_secure(dest, KEY_SHARE, 16, dest); // k1 * k3 * k2 == dest
     } else {
@@ -59,12 +71,12 @@ int key_exchange2(unsigned char *dest, char *random,
     // send out the last few pieces of keys to both sides
     // sends k_Comp2 f1 R
     XOR_secure(F1, cache2, 16, cache2);
-    XOR_secure(cache2, random, 16, cache2); // cach2 == k3 * f1 * r
+    XOR_secure(cache2, random1, 16, cache2); // cach2 == k3 * f1 * r
     int result2 = send_packet(addr, 16, cache2);
 
     // sends k_Comp1 f2 R
-    XOR_secure(F2, cache1, 16, cache1);
-    XOR_secure(cache1, random, 16, cache1); // cach1 == k1 * f2 * r
+    XOR_secure(F1, cache1, 16, cache1);
+    XOR_secure(cache1, random2, 16, cache1); // cach1 == k1 * f2 * r
     int result3 = send_packet(addr2, 16, cache1);
 
     return 0;
@@ -72,10 +84,12 @@ int key_exchange2(unsigned char *dest, char *random,
 
 int key_sync(unsigned char *dest, uint32_t component_cnt,
                uint32_t component_id1, uint32_t component_id2) {
-    char random_number[18];
-    Rand_NASYC(random_number, 16);
+    char random_number1[18];
+    char random_number2[18];
+    Rand_NASYC(random_number1, 16);
+    Rand_NASYC(random_number2, 16);
     if (component_cnt == 2) {
-        return key_exchange2(dest, random_number, component_id1, component_id2);
+        return key_exchange2(dest, random_number1, random_number2 ,component_id1, component_id2);
     } else {
         return key_exchange1(dest, component_id1);
     }

@@ -12,7 +12,7 @@
 // this assumes the key is 16 bytes
 int key_exchange1(unsigned char *dest, uint32_t component_id);
 // we may need a add a tag to it...
-int key_exchange2(unsigned char *dest, char *random, uint32_t component_id1,
+int key_exchange2(unsigned char *dest, char *random1, char *random2, uint32_t component_id1,
                     uint32_t component_id2);
 int key_sync(unsigned char *dest, uint32_t component_cnt,
                uint32_t component_id1, uint32_t component_id2);

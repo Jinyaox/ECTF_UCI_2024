@@ -78,7 +78,7 @@ typedef enum {
  * ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
-    uint8_t opcode;
+    uint8_t opcode; 
     uint8_t comp_ID[4];
     uint8_t rand_z[RAND_Z_SIZE];
     uint8_t rand_y[RAND_Z_SIZE];
@@ -186,6 +186,9 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
+    if(len > MAX_I2C_MESSAGE_LEN - 22){
+        len = MAX_I2C_MESSAGE_LEN - 22;
+    }
     for (int x = 0; x < len; x++) {
         command->remain[x] = buffer[x];
     }

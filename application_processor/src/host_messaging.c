@@ -20,7 +20,7 @@ void recv_input(const char *msg, char *buf) {
     print_debug(msg);
     fflush(0);
     print_ack();
-    fgets(buf, 128, stdin);
+    fgets(buf, 100, stdin);
     buf[strcspn(buf, "\n")] = '\0';
     puts("");
 }

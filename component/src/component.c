@@ -186,6 +186,9 @@ void secure_send(uint8_t *buffer, uint8_t len) {
     uint8Arr_to_uint8Arr(RAND_Z, response_ans->rand_z);
     uint8Arr_to_uint8Arr(command->rand_z, RAND_Z);
     uint8Arr_to_uint8Arr(command->rand_y, RAND_Y);
+    if(len > MAX_I2C_MESSAGE_LEN - 21){
+        len = MAX_I2C_MESSAGE_LEN - 21;
+    }
     for (int x = 0; x < len; x++) {
         command->remain[x] = buffer[x];
     }

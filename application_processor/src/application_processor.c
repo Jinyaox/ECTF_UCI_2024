@@ -668,7 +668,7 @@ void boot() {
 
 // Compare the entered PIN to the correct PIN
 int validate_pin() {
-    char buf[100];
+    char buf[128];
     recv_input("Enter pin: ", buf);
     if (!strncmp(buf, AP_PIN, 6)) {
         print_debug("Pin Accepted!\n");
@@ -681,7 +681,7 @@ int validate_pin() {
 
 // Function to validate the replacement token
 int validate_token() {
-    char buf[100];
+    char buf[128];
     recv_input("Enter token: ", buf);
     if (!strncmp(buf, AP_TOKEN, 16)) {
         print_debug("Token Accepted!\n");
@@ -710,7 +710,7 @@ void attempt_boot() {
 
 // Replace a component if the PIN is correct
 void attempt_replace() {
-    char buf[100];
+    char buf[128];
 
     if (validate_token()) {
         return;
@@ -748,7 +748,7 @@ void attempt_replace() {
 
 // Attest a component if the PIN is correct
 void attempt_attest() {
-    char buf[100];
+    char buf[128];
 
     if (validate_pin()) {
         return;
@@ -776,7 +776,7 @@ int main() {
     print_info("Application Processor Started\n");
 
     // Handle commands forever
-    char buf[100];
+    char buf[128];
     while (1) {
         memset(buf, 0, 100);
         recv_input("Enter Command: ", buf);

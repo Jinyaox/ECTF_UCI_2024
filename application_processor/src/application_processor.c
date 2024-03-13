@@ -686,7 +686,7 @@ int validate_pin() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid PIN!\n");
-    MXC_Delay(MXC_DELAY_MSEC(5000));
+    MXC_Delay(MXC_DELAY_MSEC(4500));
     return ERROR_RETURN;
 }
 
@@ -699,7 +699,7 @@ int validate_token() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid Token!\n");
-    MXC_Delay(MXC_DELAY_MSEC(5000));
+    MXC_Delay(MXC_DELAY_MSEC(4500));
     return ERROR_RETURN;
 }
 

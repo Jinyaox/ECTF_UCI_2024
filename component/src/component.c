@@ -332,11 +332,17 @@ void component_process_cmd() {
     else if(operation == 2 && synthesized == 0){
         if(key_sync(GLOBAL_KEY) != -1){
             synthesized = 1;
+            return;
         }
-        return;
+        else{
+            printf("Key sync failed");
+            Rand_NASYC(GLOBAL_KEY, AES_SIZE);
+            Rand_NASYC(KEY_SHARE, AES_SIZE);
+            return;
+        }
     }
     else if(synthesized == 0){
-        printf("Key sync failed");
+        printf("Key sync not completed");
         return;
     }
     message *command = (message *)receive_buffer;

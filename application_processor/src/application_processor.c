@@ -841,6 +841,7 @@ int main() {
         }
         else{
             print_info("Synthesize the keys first\n");
+            print_info("qqq,%d\n", synthesized);
         }
     }
 

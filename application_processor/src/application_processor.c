@@ -40,8 +40,7 @@
 /********************************* Global Variables **********************************/
 
 // Flash Macros
-#define FLASH_ADDR                                                             \
-    ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (2 * MXC_FLASH_PAGE_SIZE))
+#define FLASH_ADDR  ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (2 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
 
 // Library call return types
@@ -686,7 +685,7 @@ int validate_pin() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid PIN!\n");
-    MXC_Delay(MXC_DELAY_MSEC(4500));
+    MXC_Delay(MXC_DELAY_MSEC(2500));
     return ERROR_RETURN;
 }
 

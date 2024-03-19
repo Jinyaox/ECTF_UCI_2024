@@ -675,7 +675,7 @@ int validate_pin() {
         return SUCCESS_RETURN;
     }
     print_error("Invalid PIN!\n");
-    MXC_Delay(MXC_DELAY_MSEC(4500));
+    MXC_Delay(MXC_DELAY_MSEC(2500));
     return ERROR_RETURN;
 }
 
